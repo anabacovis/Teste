@@ -359,6 +359,8 @@ html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Plus Jakart
   .right { padding: 20px 16px; }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js"></script>
 </head>
 <body>
 
@@ -386,8 +388,8 @@ html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Plus Jakart
   <!-- RIGHT: form -->
   <div class="right">
     <div class="form-card">
-      <h2>Bem-vinda de volta 👋</h2>
-      <p class="sub">Entre com suas credenciais para acessar a operação.</p>
+      <h2 id="formTitle">Bem-vinda de volta 👋</h2>
+      <p class="sub" id="formSub">Entre com suas credenciais para acessar a operação.</p>
 
       <!-- error banner -->
       <div class="err-banner" id="errBanner">
@@ -398,7 +400,7 @@ html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Plus Jakart
       <!-- success banner (esqueci senha) -->
       <div class="ok-banner" id="okBanner">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
-        <span>Link de recuperação enviado para seu e-mail.</span>
+        <span id="okMsg">Link de recuperação enviado para seu e-mail.</span>
       </div>
 
       <form id="loginForm" novalidate>
@@ -510,7 +512,7 @@ $('senha').addEventListener('blur', () => {
 });
 
 // Esqueci minha senha
-$('forgotLink').addEventListener('click', e => {
+$('forgotLink').addEventListener('click', async e => {
   e.preventDefault();
   const email = $('email').value.trim();
   clearErrors();
@@ -521,8 +523,53 @@ $('forgotLink').addEventListener('click', e => {
     $('email').focus();
     return;
   }
-  // Simulate sending (Supabase: supabase.auth.resetPasswordForEmail)
+  const link = $('forgotLink');
+  link.style.pointerEvents = 'none';
+  link.textContent = 'Enviando…';
+  const redirectTo = location.origin + location.pathname.replace(/[^/]*$/, '') + 'Login.html';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  link.style.pointerEvents = '';
+  link.textContent = 'Esqueci minha senha';
+  if (error) {
+    $('errMsg').textContent = /rate|seconds/i.test(error.message)
+      ? 'Muitos pedidos seguidos. Aguarde alguns minutos e tente de novo.'
+      : 'Não foi possível enviar o e-mail agora. Tente de novo em instantes.';
+    $('errBanner').classList.add('show');
+    return;
+  }
+  $('okMsg').textContent = 'Se este e-mail tiver acesso, o link de recuperação chega em instantes. Confira também o spam.';
   $('okBanner').classList.add('show');
+});
+
+// Modo "nova senha" (aberto pelo link do e-mail de recuperação)
+let recoveryMode = false;
+function enterRecoveryMode(){
+  if (recoveryMode) return;
+  recoveryMode = true;
+  clearErrors();
+  $('formTitle').textContent = 'Crie uma nova senha 🔒';
+  $('formSub').textContent = 'Digite a nova senha (mínimo 6 caracteres).';
+  $('fieldEmail').style.display = 'none';
+  document.querySelector('.forgot-row').style.display = 'none';
+  document.querySelector('label[for="senha"]').textContent = 'Nova senha';
+  $('senha').setAttribute('autocomplete', 'new-password');
+  $('senha').value = '';
+  $('btnTxt').textContent = 'Salvar nova senha';
+  $('senha').focus();
+}
+sb.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY') enterRecoveryMode(); });
+if (authHash.get('type') === 'recovery') enterRecoveryMode();
+if (authHash.get('error_code')) {
+  $('errMsg').textContent = authHash.get('error_code') === 'otp_expired'
+    ? 'Este link de recuperação expirou ou já foi usado. Peça um novo em "Esqueci minha senha".'
+    : 'Link inválido. Peça um novo em "Esqueci minha senha".';
+  $('errBanner').classList.add('show');
+  history.replaceState(null, '', location.pathname);
+}
+
+// Já entrou antes? Vai direto para o Dashboard
+sb.auth.getSession().then(({ data }) => {
+  if (data.session && !recoveryMode && authHash.get('type') !== 'recovery') window.location.replace('Dashboard.html');
 });
 
 // Submit
@@ -534,7 +581,7 @@ $('loginForm').addEventListener('submit', async e => {
   const senha = $('senha').value;
   let valid = true;
 
-  if (!email || !validEmail(email)) {
+  if (!recoveryMode && (!email || !validEmail(email))) {
     $('email').classList.add('invalid');
     $('emailErr').querySelector('span').textContent = !email ? 'Campo obrigatório' : 'E-mail inválido';
     $('emailErr').classList.add('show');
@@ -558,27 +605,30 @@ $('loginForm').addEventListener('submit', async e => {
   $('btnLogin').disabled = true;
   $('loadingOv').classList.add('show');
 
-  // Simulate Supabase Auth call:
-  // const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
-  await new Promise(r => setTimeout(r, 1800));
+  const { error } = recoveryMode
+    ? await sb.auth.updateUser({ password: senha })
+    : await sb.auth.signInWithPassword({ email, password: senha });
 
-  // Demo: simulate wrong credentials for non-demo email
-  const DEMO_EMAIL = 'ana@agencia.com.br';
-  const DEMO_PW = '123456';
   $('loadingOv').classList.remove('show');
   $('btnTxt').style.display = '';
   $('btnSpin').style.display = 'none';
   $('btnLogin').disabled = false;
 
-  if (email === DEMO_EMAIL && senha === DEMO_PW) {
+  if (!error) {
     // SUCCESS → redirect to Dashboard
-    $('btnTxt').textContent = '✓ Entrando…';
+    $('btnTxt').textContent = recoveryMode ? '✓ Senha salva…' : '✓ Entrando…';
     $('btnLogin').style.background = 'linear-gradient(135deg,#16a45f,#1db870)';
     setTimeout(() => { window.location.href = 'Dashboard.html'; }, 800);
   } else {
     // ERROR state
+    const msg = error.message || '';
+    $('errMsg').textContent = recoveryMode
+      ? (/different|same/i.test(msg) ? 'A nova senha precisa ser diferente da atual.' : 'Não foi possível salvar a senha. Peça um novo link e tente de novo.')
+      : /confirm/i.test(msg) ? 'Este e-mail ainda não foi confirmado.'
+      : /rate|seconds/i.test(msg) ? 'Muitas tentativas. Aguarde alguns minutos.'
+      : 'E-mail ou senha incorretos. Verifique e tente novamente.';
     $('errBanner').classList.add('show');
-    $('email').classList.add('invalid');
+    if (!recoveryMode) $('email').classList.add('invalid');
     $('senha').classList.add('invalid');
   }
 });
