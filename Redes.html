@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Redes sociais — Agência OS</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+  .tabs { display:inline-flex; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:4px; box-shadow:var(--shadow); margin-bottom:18px; }
+  .tabs button { border:none; background:none; font-family:inherit; font-size:13.5px; font-weight:700; color:var(--muted); padding:9px 16px; border-radius:9px; cursor:pointer; }
+  .tabs button.on { background:var(--ink); color:#fff; }
+  .panel { display:none; } .panel.on { display:block; }
+
+  .tb { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .tb .spacer { flex:1; }
+  .tb .upd { font-size:12.5px; color:var(--muted); font-weight:600; }
+  .sel { position:relative; display:inline-flex; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:11px; box-shadow:var(--shadow); }
+  .sel select { appearance:none; border:none; background:none; font-family:inherit; font-size:13.5px; font-weight:600; color:var(--ink-soft); padding:10px 32px 10px 13px; border-radius:11px; cursor:pointer; }
+  .sel select:focus { outline:none; }
+  .sel::after { content:''; position:absolute; right:13px; width:7px; height:7px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:rotate(45deg) translateY(-2px); pointer-events:none; }
+
+  .kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:18px; }
+  @media (max-width:1100px){ .kpis { grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:620px){ .kpis { grid-template-columns:repeat(2,1fr); gap:10px; } }
+  .fcard { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r); box-shadow:var(--shadow); padding:16px; }
+  .fcard .fl { font-size:12.5px; font-weight:700; color:var(--muted); }
+  .fcard .fv { font-size:22px; font-weight:800; color:var(--ink); letter-spacing:-.4px; margin-top:4px; }
+  .fcard .fsub { font-size:12px; font-weight:700; margin-top:6px; color:var(--muted); }
+  .up { color:var(--green) !important; } .down { color:var(--red) !important; }
+
+  .chart-card { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:18px 18px 10px; margin-bottom:18px; }
+  .chart-card h3 { margin:0 0 4px; font-size:15px; font-weight:800; color:var(--ink); }
+  .chart-card p { margin:0 0 10px; font-size:12.5px; color:var(--muted); font-weight:600; }
+  .chart-card svg { width:100%; height:200px; display:block; }
+
+  .table-scroll { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); overflow:auto; }
+  table.fin { width:100%; border-collapse:collapse; min-width:720px; }
+  table.fin thead th { text-align:left; font-size:11.5px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); padding:14px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  table.fin td { padding:12px 14px; border-bottom:1px solid var(--border-2); font-size:13.5px; vertical-align:middle; }
+  table.fin tbody tr:last-child td { border-bottom:none; }
+  table.fin tbody tr.click { cursor:pointer; } table.fin tbody tr.click:hover { background:var(--surface-2); }
+  .num { font-weight:800; color:var(--ink); white-space:nowrap; }
+  .t-empty { text-align:center; color:var(--muted); font-weight:600; padding:34px 0; }
+
+  .form-card { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:18px; margin-bottom:18px; }
+  .form-card h3 { margin:0 0 4px; font-size:15px; font-weight:800; color:var(--ink); }
+  .form-card .hint { margin:0 0 14px; font-size:12.5px; color:var(--muted); font-weight:600; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  @media (max-width:760px){ .grid { grid-template-columns:1fr; } }
+  .f label { display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
+  .f input, .f select, .f textarea { width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; color:var(--ink); background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:10px 12px; }
+  .f textarea { min-height:110px; resize:vertical; }
+  .f.full { grid-column:1 / -1; }
+  .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
+  .ferr { color:var(--red); font-size:13px; font-weight:700; margin-top:10px; display:none; }
+  .thumb { width:44px; height:44px; border-radius:9px; object-fit:cover; background:var(--surface-2); }
+  .txt { max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ink-soft); font-weight:600; }
+  .lnk { color:var(--blue); font-weight:700; text-decoration:none; }
+  .mini { border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; padding:7px 11px; border-radius:9px; background:var(--surface-2); color:var(--ink-soft); }
+
+  .toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:13px; font-size:14px; font-weight:700; box-shadow:var(--shadow-pop); opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; z-index:100; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js" data-guard></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar" data-active="redes"></div>
+  <div id="scrim" class="scrim" onclick="toggleSidebar()"></div>
+
+  <main class="main">
+    <div class="mobile-top">
+      <button onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <span class="mt-brand">Redes sociais</span><span style="width:40px"></span>
+    </div>
+
+    <header class="topbar">
+      <div>
+        <h2>Redes sociais</h2>
+        <p class="sub">Métricas do Instagram (Metricool) e fila de postagens enviadas para revisão.</p>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="on" data-tab="metricas">Métricas</button>
+      <button data-tab="postagens">Postagens</button>
+    </div>
+
+    <!-- MÉTRICAS -->
+    <section class="panel on" id="p-metricas">
+      <div class="tb">
+        <div class="sel"><select id="fMarca"></select></div>
+        <div class="sel"><select id="fPeriodo"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select></div>
+        <span class="spacer"></span>
+        <span class="upd" id="upd">—</span>
+      </div>
+
+      <div class="kpis">
+        <div class="fcard"><div class="fl">Seguidores</div><div class="fv" id="kSeg">—</div><div class="fsub" id="kSegSub">—</div></div>
+        <div class="fcard"><div class="fl">Alcance</div><div class="fv" id="kAlc">—</div><div class="fsub" id="kAlcSub">—</div></div>
+        <div class="fcard"><div class="fl">Visualizações</div><div class="fv" id="kVis">—</div><div class="fsub" id="kVisSub">—</div></div>
+        <div class="fcard"><div class="fl">Interações</div><div class="fv" id="kInt">—</div><div class="fsub" id="kIntSub">—</div></div>
+        <div class="fcard"><div class="fl">Publicações</div><div class="fv" id="kPub">—</div><div class="fsub" id="kPubSub">feed + reels</div></div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Alcance por dia</h3>
+        <p id="chartSub">Pessoas alcançadas por dia no período.</p>
+        <svg id="chart" viewBox="0 0 800 200" preserveAspectRatio="none" role="img" aria-label="Gráfico de alcance por dia"></svg>
+      </div>
+
+      <div class="table-scroll">
+        <table class="fin">
+          <thead><tr><th>Marca</th><th>Seguidores</th><th>Novos</th><th>Alcance</th><th>Visualizações</th><th>Interações</th><th>Publicações</th></tr></thead>
+          <tbody id="tbMarcas"><tr><td colspan="7" class="t-empty">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- POSTAGENS -->
+    <section class="panel" id="p-postagens">
+      <form class="form-card" id="postForm">
+        <h3>Novo post</h3>
+        <p class="hint">"Enviar para revisão" manda o post para o Metricool como <b>para revisão</b> na próxima sincronização (8h, 13h e 18h). Nada é publicado sem aprovação no Metricool.</p>
+        <div class="grid">
+          <div class="f"><label for="pMarca">Marca</label><select id="pMarca" required></select></div>
+          <div class="f"><label for="pTipo">Formato (Instagram)</label><select id="pTipo"><option value="POST">Post / carrossel</option><option value="REEL">Reel</option><option value="STORY">Story</option></select></div>
+          <div class="f"><label for="pData">Publicar em</label><input type="datetime-local" id="pData" required /></div>
+          <div class="f full"><label for="pTexto">Legenda</label><textarea id="pTexto" placeholder="Texto do post"></textarea></div>
+          <div class="f full"><label for="pMidia">Imagem ou vídeo (obrigatório no Instagram)</label><input type="file" id="pMidia" accept="image/*,video/*" /></div>
+        </div>
+        <div class="ferr" id="pErr"></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="btnRascunho">Salvar rascunho</button>
+          <button type="submit" class="btn btn-primary" id="btnEnviar">Enviar para revisão</button>
+        </div>
+      </form>
+
+      <div class="table-scroll">
+        <table class="fin">
+          <thead><tr><th>Mídia</th><th>Marca</th><th>Formato</th><th>Publicar em</th><th>Legenda</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tbFila"><tr><td colspan="7" class="t-empty">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/sidebar.js"></script>
+<script src="assets/redes.js"></script>
+</body>
+</html>
