@@ -41,6 +41,7 @@
       visualizacoes: soma('visualizacoes'),
       interacoes: soma('interacoes'),
       publicacoes: soma('publicacoes'),
+      stories: soma('stories'),
     };
   }
 
@@ -87,10 +88,10 @@
     const porMarca = m => resumo(atual.filter(r => r.brand_id === m.brand_id));
     const lista = marcas.filter(m => !marca || String(m.brand_id) === marca);
     const tot = lista.map(porMarca).reduce((t, r) => {
-      ['novos', 'alcance', 'visualizacoes', 'interacoes', 'publicacoes'].forEach(k => t[k] += r[k] || 0);
+      ['novos', 'alcance', 'visualizacoes', 'interacoes', 'publicacoes', 'stories'].forEach(k => t[k] += r[k] || 0);
       t.seguidores += r.seguidores || 0;
       return t;
-    }, { seguidores: 0, novos: 0, alcance: 0, visualizacoes: 0, interacoes: 0, publicacoes: 0 });
+    }, { seguidores: 0, novos: 0, alcance: 0, visualizacoes: 0, interacoes: 0, publicacoes: 0, stories: 0 });
     const totAnt = resumo(ant);
 
     $('kSeg').textContent = fmt(tot.seguidores);
@@ -100,6 +101,7 @@
     $('kVis').textContent = fmt(tot.visualizacoes); setSub('kVisSub', variacao(tot.visualizacoes, totAnt.visualizacoes));
     $('kInt').textContent = fmt(tot.interacoes); setSub('kIntSub', variacao(tot.interacoes, totAnt.interacoes));
     $('kPub').textContent = fmt(tot.publicacoes);
+    $('kPubSub').textContent = 'feed + reels · ' + fmt(tot.stories) + ' stories';
 
     // Gráfico: alcance diário somado
     const porDia = {};
@@ -112,8 +114,8 @@
       return `<tr class="click" data-brand="${m.brand_id}">
         <td><b>${esc(m.nome)}</b><br><small style="color:var(--muted);font-weight:600">@${esc(m.instagram)}</small></td>
         <td class="num">${fmt(r.seguidores)}</td><td class="num up">+${fmt(r.novos)}</td><td class="num">${fmt(r.alcance)}</td>
-        <td class="num">${fmt(r.visualizacoes)}</td><td class="num">${fmt(r.interacoes)}</td><td class="num">${fmt(r.publicacoes)}</td></tr>`;
-    }).join('') : '<tr><td colspan="7" class="t-empty">Nenhuma marca sincronizada ainda.</td></tr>';
+        <td class="num">${fmt(r.visualizacoes)}</td><td class="num">${fmt(r.interacoes)}</td><td class="num">${fmt(r.publicacoes)}</td><td class="num">${fmt(r.stories)}</td></tr>`;
+    }).join('') : '<tr><td colspan="8" class="t-empty">Nenhuma marca sincronizada ainda.</td></tr>';
     document.querySelectorAll('#tbMarcas tr.click').forEach(tr => tr.addEventListener('click', () => {
       $('fMarca').value = tr.dataset.brand; renderMetricas();
     }));
@@ -126,7 +128,7 @@
       sb.from('metricool_metricas_diarias').select('*').gte('data', desde.toISOString().slice(0, 10)).limit(5000),
       sb.from('metricool_sync_log').select('rodado_em, ok').order('rodado_em', { ascending: false }).limit(1),
     ]);
-    if (mk.error || mt.error) { $('tbMarcas').innerHTML = '<tr><td colspan="7" class="t-empty">Não foi possível carregar as métricas.</td></tr>'; return; }
+    if (mk.error || mt.error) { $('tbMarcas').innerHTML = '<tr><td colspan="8" class="t-empty">Não foi possível carregar as métricas.</td></tr>'; return; }
     marcas = mk.data; linhas = mt.data;
     const opts = marcas.map(m => `<option value="${m.brand_id}">${esc(m.nome)}</option>`).join('');
     $('fMarca').innerHTML = '<option value="">Todas as marcas</option>' + opts;
