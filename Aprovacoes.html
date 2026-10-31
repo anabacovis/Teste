@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aprovações — Connect OS</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+  /* destaques topo */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+  .stat { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r); box-shadow:var(--shadow); padding:16px 18px; display:flex; align-items:center; gap:14px; }
+  .stat .ico { width:42px; height:42px; border-radius:12px; display:grid; place-items:center; color:#fff; flex-shrink:0; }
+  .stat .ico svg { width:21px; height:21px; }
+  .stat .n { font-size:25px; font-weight:800; line-height:1; color:var(--ink); }
+  .stat .n.sm { font-size:18px; }
+  .stat .l { font-size:12.5px; font-weight:600; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* toolbar / chips */
+  .tb { display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  .qchips { display:flex; gap:9px; flex-wrap:wrap; flex:1; min-width:0; }
+  @media (max-width:760px){
+    .tb { flex-direction:column; align-items:stretch; gap:8px; }
+    .qchips { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; gap:7px; }
+    .qchips::-webkit-scrollbar { height:3px; }
+    .qchips::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+    .qchip { flex-shrink:0; padding:7px 12px; font-size:12.5px; white-space:nowrap; }
+    .sel { align-self:flex-start; }
+  }
+  .qchip { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border); background:var(--surface); border-radius:30px; padding:8px 15px; font-family:inherit; font-size:13px; font-weight:700; color:var(--ink-soft); cursor:pointer; box-shadow:var(--shadow); }
+  .qchip:hover { background:var(--surface-2); }
+  .qchip .qn { background:var(--gray-bg); color:var(--ink-soft); font-size:11.5px; border-radius:7px; padding:1px 7px; }
+  .qchip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .qchip.on .qn { background:rgba(255,255,255,.2); color:#fff; }
+  .sel { position:relative; display:inline-flex; background:var(--surface); border:1px solid var(--border); border-radius:11px; box-shadow:var(--shadow); }
+  .sel select { appearance:none; border:none; background:none; font-family:inherit; font-size:13.5px; font-weight:600; color:var(--ink-soft); padding:11px 32px 11px 13px; border-radius:11px; cursor:pointer; }
+  .sel select:focus { outline:none; }
+  .sel::after { content:''; position:absolute; right:13px; top:50%; width:7px; height:7px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:translateY(-65%) rotate(45deg); pointer-events:none; }
+
+  /* lista de cards */
+  .list { display:flex; flex-direction:column; gap:14px; }
+  .apr { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:20px 22px; display:grid; grid-template-columns:auto 1fr auto; gap:20px; align-items:center; transition:box-shadow .15s, opacity .2s; }
+  .apr:hover { box-shadow:var(--shadow-lg); }
+  .apr.sla-critico { border-color:#f7d4d2; }
+  .apr.sla-medio { border-color:#f7e0cf; }
+  .apr.done { opacity:.6; }
+  .clogo { width:50px; height:50px; border-radius:14px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:16px; }
+  .apr-body { min-width:0; }
+  .apr-tags { display:flex; align-items:center; gap:9px; margin-bottom:9px; flex-wrap:wrap; }
+  .ver { font-size:11.5px; font-weight:800; color:var(--ink-soft); background:var(--gray-bg); padding:3px 9px; border-radius:7px; }
+  .apr-title { font-size:18px; font-weight:800; color:var(--ink); margin:0 0 8px; letter-spacing:-.3px; }
+  .apr-sub { font-weight:600; color:var(--muted); }
+  .apr-meta { display:flex; align-items:center; gap:11px; font-size:13px; color:var(--ink-soft); font-weight:600; flex-wrap:wrap; }
+  .apr-meta .client { font-weight:800; color:var(--ink); }
+  .apr-meta .mi { display:inline-flex; align-items:center; gap:7px; }
+  .resp-av { width:21px; height:21px; border-radius:6px; display:grid; place-items:center; color:#fff; font-size:10px; font-weight:700; }
+  .dotsep { width:3px; height:3px; border-radius:50%; background:var(--muted-2); }
+  .apr-fb { display:flex; align-items:flex-start; gap:8px; margin-top:11px; background:#fdf8f5; border:1px solid #f6e2d6; border-radius:11px; padding:9px 12px; font-size:13px; font-weight:600; color:#b8502c; }
+  .apr-fb[hidden] { display:none; }
+  .apr-fb svg { width:15px; height:15px; flex-shrink:0; margin-top:1px; }
+
+  .apr-side { display:flex; flex-direction:column; align-items:flex-end; gap:12px; }
+  .sla-pill { display:inline-flex; align-items:center; gap:7px; padding:7px 13px; border-radius:30px; font-size:13.5px; font-weight:800; white-space:nowrap; }
+  .sla-pill svg { width:15px; height:15px; }
+  .sla-pill.ok { background:var(--blue-bg); color:var(--blue); }
+  .sla-pill.leve { background:var(--amber-bg); color:var(--amber); }
+  .sla-pill.medio { background:#fdeee6; color:#d24f2a; }
+  .sla-pill.critico { background:var(--red-bg); color:var(--red); }
+  .sla-pill.done { background:var(--green-bg); color:var(--green); }
+  .sla-note { font-size:11px; font-weight:700; color:var(--muted-2); text-transform:uppercase; letter-spacing:.4px; margin-top:-6px; }
+  .apr-actions { display:flex; align-items:center; gap:8px; }
+  .ab { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--surface); color:var(--ink-soft); font-family:inherit; font-size:13px; font-weight:700; padding:9px 13px; border-radius:10px; cursor:pointer; white-space:nowrap; transition:background .12s,border-color .12s; }
+  .ab svg { width:15px; height:15px; }
+  .ab.open { padding:9px; }
+  .ab:hover { background:var(--surface-2); }
+  .ab.ok { background:var(--green-bg); color:var(--green); border-color:transparent; } .ab.ok:hover { background:#d6f1e1; }
+  .ab.warn { background:#fdeee6; color:#d24f2a; border-color:transparent; } .ab.warn:hover { background:#fbe1d3; }
+  .ab.info { background:var(--blue-bg); color:var(--blue); border-color:transparent; } .ab.info:hover { background:#dbe7ff; }
+  .ab.ghost { background:var(--surface); }
+
+  .apr-correcao { grid-column:1/-1; }
+  .apr-correcao[hidden] { display:none; }
+  .apr-correcao textarea { width:100%; border:1px solid var(--border); border-radius:12px; padding:11px 14px; font-family:inherit; font-size:14px; color:var(--ink); resize:vertical; min-height:64px; background:var(--surface-2); }
+  .apr-correcao textarea:focus { outline:none; border-color:var(--primary); background:#fff; }
+  .cr-actions { display:flex; gap:8px; margin-top:9px; }
+
+  .empty { text-align:center; color:var(--muted); font-weight:600; padding:50px 0; }
+  .listfoot { margin-top:16px; color:var(--muted); font-size:13px; font-weight:600; }
+  .listfoot b { color:var(--ink); }
+
+  .toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:13px; font-size:14px; font-weight:700; box-shadow:var(--shadow-pop); opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; z-index:100; display:flex; align-items:center; gap:10px; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast svg { width:18px; height:18px; color:#4be08a; }
+
+  @media (max-width:1040px){ .stats { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:860px){
+    .apr { grid-template-columns:auto 1fr; }
+    .apr-side { grid-column:1/-1; flex-direction:row; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .sla-note { display:none; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js" data-guard></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar" data-active="aprovacoes"></div>
+  <div id="scrim" class="scrim" onclick="toggleSidebar()"></div>
+
+  <main class="main">
+    <div class="mobile-top">
+      <button onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <span class="mt-brand">Aprovações</span><span style="width:40px"></span>
+    </div>
+
+    <header class="topbar">
+      <div>
+        <h2>Aprovações</h2>
+        <p class="sub">Tudo que está esperando aprovação — priorizado por tempo de espera.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" aria-label="Notificações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="dot">3</span></button>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Enviar para aprovação</button>
+      </div>
+    </header>
+
+    <!-- DESTAQUES -->
+    <section class="stats">
+      <div class="stat"><span class="ico" style="background:var(--tile-yellow)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><div class="n" style="color:var(--amber)" id="sAguard">0</div><div class="l">Aguardando aprovação</div></div></div>
+      <div class="stat"><span class="ico" style="background:var(--tile-red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span><div><div class="n" style="color:var(--red)" id="sCrit">0</div><div class="l">Críticas (+72h)</div></div></div>
+      <div class="stat"><span class="ico" style="background:var(--tile-orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><div><div class="n" style="color:#d24f2a" id="sProx">0</div><div class="l">Próximas do prazo</div></div></div>
+      <div class="stat"><span class="ico" style="background:var(--tile-purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></span><div><div class="n sm" id="sTopCli">—</div><div class="l" id="sTopCliSub">—</div></div></div>
+    </section>
+
+    <!-- CHIPS + filtro -->
+    <div class="tb">
+      <div class="qchips">
+        <button class="qchip on" data-q="todas">Todas</button>
+        <button class="qchip" data-q="paradas"><span class="qd"></span>Paradas (+48h) <span class="qn" id="qc-paradas">0</span></button>
+        <button class="qchip" data-q="criticas">Críticas <span class="qn" id="qc-criticas">0</span></button>
+        <button class="qchip" data-q="aguardando">Aguardando <span class="qn" id="qc-aguardando">0</span></button>
+        <button class="qchip" data-q="correcao">Correção <span class="qn" id="qc-correcao">0</span></button>
+        <button class="qchip" data-q="aprovadas">Aprovadas <span class="qn" id="qc-aprovadas">0</span></button>
+      </div>
+      <div class="sel"><select id="fClient"><option value="">Todos os clientes</option><option value="brasa">Brasa Meat</option><option value="casa">Casa de Pedra</option><option value="igreja">Igreja</option><option value="lcs">LCS</option><option value="trinitas">Trinitas</option><option value="unique">Unique</option><option value="outdoors">Outofdoors Travel</option><option value="vinicius">Vinicius Cortázio</option></select></div>
+    </div>
+
+    <!-- LISTA -->
+    <section class="list" id="list"></section>
+    <div class="listfoot">Mostrando <b id="count">0</b> aprovações</div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span id="toast-msg"></span></div>
+
+<script src="assets/sidebar.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/approvals.js"></script>
+</body>
+</html>

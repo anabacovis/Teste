@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Área da Nicole — Connect OS</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+  .layout { display:grid; grid-template-columns: 1.55fr 1fr; gap:18px; align-items:start; }
+
+  /* carga hero */
+  .carga { grid-column:1 / -1; background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:24px 26px; }
+  .carga-top { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; flex-wrap:wrap; margin-bottom:20px; }
+  .carga-top h3 { margin:0 0 5px; font-size:18px; font-weight:800; color:var(--ink); }
+  .carga-top .plano { font-size:13.5px; color:var(--muted); font-weight:600; }
+  .load-pill { display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:30px; font-size:14px; font-weight:800; }
+  .load-pill svg { width:17px; height:17px; }
+  .load-pill.red{ background:var(--red-bg); color:var(--red); } .load-pill.amber{ background:var(--amber-bg); color:var(--amber); } .load-pill.green{ background:var(--green-bg); color:var(--green); }
+  .carga-grid { display:grid; grid-template-columns: 1.6fr 1fr; gap:28px; align-items:center; }
+  .gauge-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; }
+  .gauge-num { font-size:15px; font-weight:700; color:var(--ink-soft); }
+  .gauge-num b { font-size:30px; font-weight:800; color:var(--ink); letter-spacing:-.5px; }
+  .gauge-pct { font-size:14px; font-weight:800; color:var(--primary); }
+  .bar-track { position:relative; height:16px; background:#eef0f6; border-radius:10px; overflow:visible; margin-bottom:22px; }
+  .bar-fill { height:100%; border-radius:10px; transition:width .5s ease; }
+  .bar-fill.red{ background:linear-gradient(90deg,#ff7a6b,#e0453f);} .bar-fill.amber{ background:linear-gradient(90deg,#fbbf3c,#f59e0b);} .bar-fill.green{ background:linear-gradient(90deg,#34d27f,#15a85a);}
+  .pace-mark { position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--ink); border-radius:2px; transform:translateX(-1px); }
+  .pace-label { position:absolute; bottom:-20px; transform:translateX(-50%); font-size:11px; font-weight:700; color:var(--ink-soft); white-space:nowrap; background:var(--surface); padding:1px 5px; border-radius:5px; }
+  .gauge-cap { margin-top:14px; font-size:13.5px; color:var(--muted); font-weight:600; }
+  .mini3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .mini { background:var(--surface-2); border:1px solid var(--border-2); border-radius:14px; padding:14px; text-align:center; }
+  .mini .mn { font-size:24px; font-weight:800; line-height:1; }
+  .mini .ml { font-size:12px; font-weight:700; color:var(--muted); margin-top:6px; }
+
+  /* focus strip */
+  .focus-strip { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .focus { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r); box-shadow:var(--shadow); padding:15px 18px; display:flex; align-items:center; gap:14px; }
+  .focus .ico { width:42px; height:42px; border-radius:12px; display:grid; place-items:center; color:#fff; flex-shrink:0; }
+  .focus .ico svg { width:21px; height:21px; }
+  .focus .n { font-size:25px; font-weight:800; line-height:1; color:var(--ink); }
+  .focus .l { font-size:12.5px; font-weight:600; color:var(--muted); margin-top:4px; }
+
+  /* cards */
+  .col-stack { display:flex; flex-direction:column; gap:18px; }
+  .sec { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:18px 20px; }
+  .sec-h { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .sec-h h3 { margin:0; font-size:16px; font-weight:800; color:var(--ink); }
+  .sec-h .cnt { background:var(--gray-bg); color:var(--ink-soft); font-size:12px; font-weight:700; border-radius:7px; padding:2px 9px; }
+  .sec-h.red h3{ color:var(--red);} .sec-h.red .cnt{ background:var(--red-bg); color:var(--red);}
+  .sec-h.amber h3{ color:var(--amber);} .sec-h.amber .cnt{ background:var(--amber-bg); color:var(--amber);}
+  .sec-h .seeall { margin-left:auto; font-size:13px; font-weight:700; color:var(--primary); text-decoration:none; }
+
+  .trow { display:flex; align-items:center; gap:13px; padding:11px 0; border-top:1px solid var(--border-2); }
+  .trow:first-child { border-top:none; }
+  .mlogo { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:12px; flex-shrink:0; }
+  .mlogo.sm { width:24px; height:24px; border-radius:7px; font-size:10px; }
+  .trow-main { flex:1; min-width:0; }
+  .trow-title { font-size:14.5px; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .trow-sub { font-weight:600; color:var(--muted); }
+  .trow-meta { display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--muted); font-weight:600; margin-top:3px; }
+  .dotsep { width:3px; height:3px; border-radius:50%; background:var(--muted-2); }
+  .trow-prazo { font-size:13px; font-weight:700; color:var(--ink-soft); white-space:nowrap; }
+  .trow-prazo.late { color:var(--red); }
+  .ic-mini { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; display:grid; place-items:center; flex-shrink:0; }
+  .ic-mini svg { width:15px; height:15px; }
+  .ic-mini:hover { color:var(--primary); border-color:#d4d2fb; background:#f6f5ff; }
+  .empty-row { padding:16px 2px; color:var(--muted); font-size:13.5px; font-weight:600; text-align:center; }
+
+  /* VIDEO grid (destaque) */
+  .video-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .vcard { border:1px solid var(--border-2); border-radius:14px; overflow:hidden; background:var(--surface); cursor:pointer; transition:box-shadow .15s, transform .1s; }
+  .vcard:hover { box-shadow:var(--shadow-lg); }
+  .vcard.late { border-color:#f7d4d2; }
+  .vthumb { position:relative; height:74px; display:grid; place-items:center; color:rgba(255,255,255,.92); }
+  .vthumb svg { width:30px; height:30px; opacity:.92; }
+  .vtype { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.35); color:#fff; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; backdrop-filter:blur(2px); }
+  .vbody { padding:11px 13px 13px; }
+  .vtitle { font-size:14px; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .vmeta { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted); margin:5px 0 10px; white-space:nowrap; overflow:hidden; }
+  .vfoot { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+
+  /* por cliente */
+  .pc-row { display:grid; grid-template-columns:150px 1fr 46px; align-items:center; gap:12px; padding:8px 0; }
+  .pc-name { display:inline-flex; align-items:center; gap:9px; font-size:13.5px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; }
+  .pc-bar { height:9px; background:#eef0f6; border-radius:6px; overflow:hidden; }
+  .pc-bar span { display:block; height:100%; background:var(--grad); border-radius:6px; }
+  .pc-val { font-size:12.5px; font-weight:800; color:var(--ink-soft); text-align:right; }
+
+  /* status */
+  .status-bar { display:flex; height:14px; border-radius:8px; overflow:hidden; gap:2px; margin-bottom:16px; }
+  .status-bar span { display:block; min-width:3px; }
+  .seg-st-gray{background:var(--gray)} .seg-st-blue{background:var(--blue)} .seg-st-amber{background:var(--amber)} .seg-st-coral{background:#e8633f} .seg-st-violet{background:var(--violet)} .seg-st-green{background:var(--green)}
+  .status-legend { display:grid; grid-template-columns:1fr 1fr; gap:9px 16px; }
+  .leg { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--ink-soft); }
+  .leg b { margin-left:auto; color:var(--ink); font-weight:800; }
+  .leg-dot { width:9px; height:9px; border-radius:50%; }
+  .leg-dot.st-gray{background:var(--gray)} .leg-dot.st-blue{background:var(--blue)} .leg-dot.st-amber{background:var(--amber)} .leg-dot.st-coral{background:#e8633f} .leg-dot.st-violet{background:var(--violet)} .leg-dot.st-green{background:var(--green)}
+
+  /* aprovações */
+  .ap-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--border-2); }
+  .ap-row:first-child { border-top:none; }
+  .ap-wait { font-size:12px; font-weight:700; color:var(--amber); background:var(--amber-bg); padding:5px 11px; border-radius:20px; white-space:nowrap; }
+  .ap-more { display:inline-block; margin-top:12px; font-size:13px; font-weight:700; color:var(--primary); text-decoration:none; }
+
+  /* atalhos */
+  .atalhos { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .atalho { display:flex; align-items:center; gap:11px; padding:13px 14px; border:1px solid var(--border); border-radius:13px; background:var(--surface); cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:700; color:var(--ink); text-decoration:none; transition:background .12s,border-color .12s; }
+  .atalho:hover { background:var(--surface-2); border-color:#d4d2fb; }
+  .atalho .ai { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:#fff; flex-shrink:0; }
+  .atalho .ai svg { width:17px; height:17px; }
+
+  .toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:13px; font-size:14px; font-weight:700; box-shadow:var(--shadow-pop); opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; z-index:100; display:flex; align-items:center; gap:10px; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast svg { width:18px; height:18px; color:#4be08a; }
+
+  @media (max-width:1040px){ .layout { grid-template-columns:1fr; } .carga-grid { grid-template-columns:1fr; gap:22px; } }
+  @media (max-width:980px){ .focus-strip { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .focus-strip, .atalhos, .status-legend, .video-grid { grid-template-columns:1fr; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js" data-guard></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar" data-active="nicole"></div>
+  <div id="scrim" class="scrim" onclick="toggleSidebar()"></div>
+
+  <main class="main">
+    <div class="mobile-top">
+      <button onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <span class="mt-brand">Área da Nicole</span><span style="width:40px"></span>
+    </div>
+
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="width:54px;height:54px;border-radius:15px;background:var(--tile-blue);display:grid;place-items:center;color:#fff;font-weight:800;font-size:22px;flex-shrink:0">N</span>
+        <div>
+          <h2>Área da Nicole</h2>
+          <p class="sub">Audiovisual · vídeos Instagram, Reels, Shorts, News e sob demanda</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>5 de Junho, 2025</button>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Nova Demanda</button>
+      </div>
+    </header>
+
+    <div class="layout">
+
+      <!-- CARGA -->
+      <section class="carga">
+        <div class="carga-top">
+          <div>
+            <h3>Carga do mês</h3>
+            <span class="plano" id="planoTxt">Plano: <b>20–24 fixas</b> + sob demanda</span>
+          </div>
+          <span class="load-pill amber" id="loadVerdict">—</span>
+        </div>
+        <div class="carga-grid">
+          <div class="gauge">
+            <div class="gauge-head">
+              <span class="gauge-num"><b id="loadConcl">0</b> / <span id="loadMeta">24</span> entregues ou agendadas</span>
+              <span class="gauge-pct" id="loadPct">0%</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill amber" id="barFill" style="width:0"></div>
+              <span class="pace-mark" id="paceMark" style="left:71%"></span>
+              <span class="pace-label" id="paceLabel" style="left:71%">ritmo 71%</span>
+            </div>
+            <div class="gauge-cap" id="loadMsg">—</div>
+          </div>
+          <div class="mini3">
+            <div class="mini"><div class="mn" style="color:var(--violet)" id="mVideos">0</div><div class="ml">Vídeos em produção</div></div>
+            <div class="mini"><div class="mn" style="color:var(--red)" id="mAtrasadas">0</div><div class="ml">Atrasadas</div></div>
+            <div class="mini"><div class="mn" style="color:var(--amber)" id="mDemanda">0</div><div class="ml">Sob demanda</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOCUS -->
+      <section class="focus-strip">
+        <div class="focus"><span class="ico" style="background:var(--tile-purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span><div><div class="n" id="fHoje">0</div><div class="l">Para hoje</div></div></div>
+        <div class="focus"><span class="ico" style="background:var(--tile-red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><div class="n" style="color:var(--red)" id="fAtras">0</div><div class="l">Atrasadas</div></div></div>
+        <div class="focus"><span class="ico" style="background:linear-gradient(135deg,#9b6cf0,#6d4fd6)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><div><div class="n" style="color:var(--violet)" id="fVideos">0</div><div class="l">Vídeos em produção</div></div></div>
+        <div class="focus"><span class="ico" style="background:var(--tile-yellow)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><div><div class="n" style="color:var(--amber)" id="fDemanda">0</div><div class="l">Sob demanda</div></div></div>
+      </section>
+
+      <!-- LEFT -->
+      <div class="col-stack">
+        <section class="sec" id="secAtrasadas">
+          <div class="sec-h red"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><h3>Atrasadas</h3><span class="cnt" id="cAtras">0</span></div>
+          <div id="listAtrasadas"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><svg viewBox="0 0 24 24" fill="var(--violet)" stroke="none" style="width:18px;height:18px"><path d="M8 5v14l11-7z"/></svg><h3>Vídeos em produção</h3><span class="cnt" id="cVideos">0</span></div>
+          <div class="video-grid" id="videoGrid"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg><h3>Para hoje</h3><span class="cnt" id="cHoje">0</span></div>
+          <div id="listHoje"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><h3>Próximas entregas</h3><span class="cnt" id="cProx">0</span><a class="seeall" href="Producao.html">Ver na Produção →</a></div>
+          <div id="listProximas"></div>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col-stack">
+        <section class="sec">
+          <div class="sec-h amber"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>Demandas sob demanda</h3><span class="cnt" id="cDemanda">0</span></div>
+          <div id="listDemanda"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><h3>Produção por cliente</h3></div>
+          <div id="porCliente"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><h3>Status das entregas</h3></div>
+          <div class="status-bar" id="statusBar"></div>
+          <div class="status-legend" id="statusLegend"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg><h3>Aprovações pendentes</h3><span class="cnt" id="cAprov">0</span></div>
+          <div id="aprovList"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h"><h3>Atalhos rápidos</h3></div>
+          <div class="atalhos">
+            <a class="atalho" href="Producao.html"><span class="ai" style="background:linear-gradient(135deg,#9b6cf0,#6d4fd6)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>Meus vídeos</a>
+            <a class="atalho" href="Calendario.html"><span class="ai" style="background:var(--tile-blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Calendário</a>
+            <a class="atalho" href="Arquivos.html"><span class="ai" style="background:var(--tile-green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>Arquivos / Drive</a>
+            <button class="atalho"><span class="ai" style="background:var(--tile-orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Nova Demanda</button>
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span id="toast-msg"></span></div>
+
+<script src="assets/sidebar.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/nicole.js"></script>
+</body>
+</html>

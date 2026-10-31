@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Entrar — Agência OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+:root {
+  --ink:     #1a2236;
+  --ink-s:   #4a546a;
+  --muted:   #818b9e;
+  --border:  #e9ebf2;
+  --surface: #ffffff;
+  --canvas:  #f5f6fb;
+  --primary: #6366f1;
+  --grad:    linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+  --red:     #e0453f;
+  --red-bg:  #fdebea;
+  --green:   #16a45f;
+  --shadow:  0 1px 2px rgba(20,28,54,.04), 0 6px 18px rgba(20,28,54,.06);
+  --r: 16px;
+}
+
+/* ── SHELL ── */
+.page {
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  min-height: 100vh;
+}
+
+/* ── LEFT PANEL (brand) ── */
+.left {
+  background: #090d18;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 56px;
+  overflow: hidden;
+}
+.left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 500px at 15% 10%, rgba(99,102,241,.22) 0%, transparent 65%),
+    radial-gradient(ellipse 500px 400px at 85% 90%, rgba(139,92,246,.18) 0%, transparent 65%);
+}
+.left-content { position: relative; }
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 64px;
+}
+.brand-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--grad);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 24px rgba(108,99,255,.4);
+}
+.brand-icon svg { width: 24px; height: 24px; color: #fff; }
+.brand-name { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.3px; }
+.brand-name span { display: block; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.4); letter-spacing: 2px; margin-top: 1px; }
+
+.left h1 {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -.8px;
+  line-height: 1.18;
+  color: #fff;
+  margin: 0 0 20px;
+}
+.left h1 em {
+  font-style: normal;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.left p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255,255,255,.55);
+  max-width: 380px;
+  margin: 0 0 48px;
+  font-weight: 500;
+}
+.stats-row {
+  display: flex;
+  gap: 32px;
+}
+.stat { color: #fff; }
+.stat .n { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+.stat .l { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.4); margin-top: 2px; }
+
+/* bottom */
+.left-footer {
+  position: relative;
+  color: rgba(255,255,255,.3);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── RIGHT PANEL (form) ── */
+.right {
+  background: var(--canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+}
+.form-card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 6px rgba(20,28,54,.04), 0 20px 60px rgba(20,28,54,.08);
+  border: 1px solid var(--border);
+}
+.form-card h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -.4px;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.form-card .sub {
+  font-size: 14.5px;
+  color: var(--muted);
+  font-weight: 500;
+  margin: 0 0 30px;
+}
+
+/* field */
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-s);
+  margin-bottom: 7px;
+  letter-spacing: .1px;
+}
+.field-wrap {
+  position: relative;
+}
+.field-wrap .ficon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.field input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px 14px 12px 42px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: border-color .15s, box-shadow .15s;
+  outline: none;
+  -webkit-appearance: none;
+}
+.field input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99,102,241,.12);
+}
+.field input.invalid {
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px rgba(224,69,63,.10);
+}
+.field input.valid {
+  border-color: var(--green);
+}
+.field-wrap .toggle-pw {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+.field-wrap .toggle-pw svg { width: 18px; height: 18px; }
+.field-err {
+  display: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--red);
+  margin-top: 6px;
+  align-items: center;
+  gap: 5px;
+}
+.field-err.show { display: flex; }
+.field-err svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* forgot */
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 22px;
+}
+.forgot-row a {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+.forgot-row a:hover { text-decoration: underline; }
+
+/* button */
+.btn-login {
+  width: 100%;
+  border: none;
+  background: var(--grad);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 14px;
+  border-radius: 13px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(99,102,241,.32);
+  transition: transform .12s, box-shadow .15s, opacity .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.btn-login:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(99,102,241,.4); }
+.btn-login:active { transform: translateY(0); }
+.btn-login:disabled { opacity: .7; cursor: not-allowed; transform: none; }
+.btn-login svg { width: 18px; height: 18px; }
+
+/* spinner */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2.5px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* error banner */
+.err-banner {
+  display: none;
+  align-items: flex-start;
+  gap: 11px;
+  background: var(--red-bg);
+  border: 1px solid #f7d4d2;
+  border-radius: 12px;
+  padding: 13px 15px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--red);
+  line-height: 1.4;
+}
+.err-banner.show { display: flex; }
+.err-banner svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+
+/* success banner */
+.ok-banner {
+  display: none;
+  align-items: center;
+  gap: 11px;
+  background: #e6f7ee;
+  border: 1px solid #c3e8d0;
+  border-radius: 12px;
+  padding: 13px 15px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+}
+.ok-banner.show { display: flex; }
+.ok-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* divider */
+.divider { display: flex; align-items: center; gap: 14px; margin: 24px 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* footer */
+.form-footer { text-align: center; font-size: 13px; color: var(--muted); font-weight: 600; margin-top: 20px; }
+.form-footer a { color: var(--primary); font-weight: 700; text-decoration: none; }
+.form-footer a:hover { text-decoration: underline; }
+
+/* state: loading overlay */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(9,13,24,.5);
+  z-index: 50;
+  align-items: center;
+  justify-content: center;
+}
+.loading-overlay.show { display: flex; }
+.ov-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 40px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.ov-card .spin2 {
+  width: 40px; height: 40px;
+  border: 3px solid #e9ebf2;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto 16px;
+}
+.ov-card p { margin: 0; font-size: 15px; font-weight: 700; color: var(--ink-s); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; }
+  .left { display: none; }
+  .right { background: #090d18; padding: 32px 20px; min-height: 100vh; }
+  .form-card { border-radius: 20px; }
+  /* show minimal brand on mobile */
+  .form-card::before {
+    content: 'AGÊNCIA OS';
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+}
+@media (max-width: 480px) {
+  .form-card { padding: 28px 22px; }
+  .right { padding: 20px 16px; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js"></script>
+</head>
+<body>
+
+<div class="page">
+  <!-- LEFT: brand panel -->
+  <div class="left">
+    <div class="left-content">
+      <div class="brand-mark">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        </div>
+        <div class="brand-name">Agência OS<span>OPERACIONAL</span></div>
+      </div>
+      <h1>Tudo que a sua<br>agência precisa<br>em <em>um lugar só.</em></h1>
+      <p>Produções, aprovações, clientes, financeiro e equipe — organizados, claros e rápidos de operar.</p>
+      <div class="stats-row">
+        <div class="stat"><div class="n">97</div><div class="l">Entregas / mês</div></div>
+        <div class="stat"><div class="n">9</div><div class="l">Clientes ativos</div></div>
+        <div class="stat"><div class="n">2</div><div class="l">Pessoas da equipe</div></div>
+      </div>
+    </div>
+    <div class="left-footer">© 2025 Agência OS · Todos os direitos reservados</div>
+  </div>
+
+  <!-- RIGHT: form -->
+  <div class="right">
+    <div class="form-card">
+      <h2 id="formTitle">Bem-vinda de volta 👋</h2>
+      <p class="sub" id="formSub">Entre com suas credenciais para acessar a operação.</p>
+
+      <!-- error banner -->
+      <div class="err-banner" id="errBanner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5M12 16h.01"/></svg>
+        <span id="errMsg">E-mail ou senha incorretos. Verifique e tente novamente.</span>
+      </div>
+
+      <!-- success banner (esqueci senha) -->
+      <div class="ok-banner" id="okBanner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+        <span id="okMsg">Link de recuperação enviado para seu e-mail.</span>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <!-- email -->
+        <div class="field" id="fieldEmail">
+          <label for="email">E-mail</label>
+          <div class="field-wrap">
+            <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <input type="email" id="email" name="email" placeholder="ana@agencia.com.br" autocomplete="email" />
+          </div>
+          <div class="field-err" id="emailErr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5M12 16h.01"/></svg>
+            <span>E-mail inválido</span>
+          </div>
+        </div>
+
+        <!-- senha -->
+        <div class="field" id="fieldPw">
+          <label for="senha">Senha</label>
+          <div class="field-wrap">
+            <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="senha" name="senha" placeholder="••••••••" autocomplete="current-password" />
+            <button type="button" class="toggle-pw" id="togglePw" aria-label="Mostrar senha">
+              <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="field-err" id="pwErr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5M12 16h.01"/></svg>
+            <span>Senha deve ter pelo menos 6 caracteres</span>
+          </div>
+        </div>
+
+        <!-- forgot -->
+        <div class="forgot-row">
+          <a href="#" id="forgotLink">Esqueci minha senha</a>
+        </div>
+
+        <!-- submit -->
+        <button type="submit" class="btn-login" id="btnLogin">
+          <span id="btnTxt">Entrar</span>
+          <span id="btnSpin" style="display:none"><span class="spinner"></span></span>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        Problemas para entrar? <a href="mailto:suporte@agenciaos.com.br">Fale com o suporte</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- loading overlay -->
+<div class="loading-overlay" id="loadingOv">
+  <div class="ov-card">
+    <div class="spin2"></div>
+    <p>Verificando credenciais…</p>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// Toggle password visibility
+$('togglePw').addEventListener('click', () => {
+  const inp = $('senha');
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  $('eyeIcon').innerHTML = showing
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="m1 1 22 22"/>';
+});
+
+// Validate email
+function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
+
+// Clear errors
+function clearErrors(){
+  ['email','senha'].forEach(id => {
+    const inp = document.getElementById(id);
+    inp.classList.remove('invalid','valid');
+    document.getElementById(id+'Err')?.classList.remove('show');
+  });
+  $('errBanner').classList.remove('show');
+  $('okBanner').classList.remove('show');
+}
+
+// Inline validation on blur
+$('email').addEventListener('blur', () => {
+  const v = $('email').value;
+  if (v && !validEmail(v)) {
+    $('email').classList.add('invalid');
+    $('emailErr').classList.add('show');
+  } else if (v) {
+    $('email').classList.remove('invalid');
+    $('email').classList.add('valid');
+    $('emailErr').classList.remove('show');
+  }
+});
+$('senha').addEventListener('blur', () => {
+  const v = $('senha').value;
+  if (v && v.length < 6) {
+    $('senha').classList.add('invalid');
+    $('pwErr').classList.add('show');
+  } else if (v) {
+    $('senha').classList.remove('invalid');
+    $('senha').classList.add('valid');
+    $('pwErr').classList.remove('show');
+  }
+});
+
+// Esqueci minha senha
+$('forgotLink').addEventListener('click', async e => {
+  e.preventDefault();
+  const email = $('email').value.trim();
+  clearErrors();
+  if (!email || !validEmail(email)) {
+    $('email').classList.add('invalid');
+    $('emailErr').querySelector('span').textContent = 'Preencha um e-mail válido para recuperar a senha';
+    $('emailErr').classList.add('show');
+    $('email').focus();
+    return;
+  }
+  const link = $('forgotLink');
+  link.style.pointerEvents = 'none';
+  link.textContent = 'Enviando…';
+  const redirectTo = location.origin + location.pathname.replace(/[^/]*$/, '') + 'Login.html';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  link.style.pointerEvents = '';
+  link.textContent = 'Esqueci minha senha';
+  if (error) {
+    $('errMsg').textContent = /rate|seconds/i.test(error.message)
+      ? 'Muitos pedidos seguidos. Aguarde alguns minutos e tente de novo.'
+      : 'Não foi possível enviar o e-mail agora. Tente de novo em instantes.';
+    $('errBanner').classList.add('show');
+    return;
+  }
+  $('okMsg').textContent = 'Se este e-mail tiver acesso, o link de recuperação chega em instantes. Confira também o spam.';
+  $('okBanner').classList.add('show');
+});
+
+// Modo "nova senha" (aberto pelo link do e-mail de recuperação)
+let recoveryMode = false;
+function enterRecoveryMode(){
+  if (recoveryMode) return;
+  recoveryMode = true;
+  clearErrors();
+  $('formTitle').textContent = 'Crie uma nova senha 🔒';
+  $('formSub').textContent = 'Digite a nova senha (mínimo 6 caracteres).';
+  $('fieldEmail').style.display = 'none';
+  document.querySelector('.forgot-row').style.display = 'none';
+  document.querySelector('label[for="senha"]').textContent = 'Nova senha';
+  $('senha').setAttribute('autocomplete', 'new-password');
+  $('senha').value = '';
+  $('btnTxt').textContent = 'Salvar nova senha';
+  $('senha').focus();
+}
+sb.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY') enterRecoveryMode(); });
+if (authHash.get('type') === 'recovery') enterRecoveryMode();
+if (authHash.get('error_code')) {
+  $('errMsg').textContent = authHash.get('error_code') === 'otp_expired'
+    ? 'Este link de recuperação expirou ou já foi usado. Peça um novo em "Esqueci minha senha".'
+    : 'Link inválido. Peça um novo em "Esqueci minha senha".';
+  $('errBanner').classList.add('show');
+  history.replaceState(null, '', location.pathname);
+}
+
+// Já entrou antes? Vai direto para o Dashboard
+sb.auth.getSession().then(({ data }) => {
+  if (data.session && !recoveryMode && authHash.get('type') !== 'recovery') window.location.replace('Dashboard.html');
+});
+
+// Submit
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  clearErrors();
+
+  const email = $('email').value.trim();
+  const senha = $('senha').value;
+  let valid = true;
+
+  if (!recoveryMode && (!email || !validEmail(email))) {
+    $('email').classList.add('invalid');
+    $('emailErr').querySelector('span').textContent = !email ? 'Campo obrigatório' : 'E-mail inválido';
+    $('emailErr').classList.add('show');
+    valid = false;
+  }
+  if (!senha) {
+    $('senha').classList.add('invalid');
+    $('pwErr').querySelector('span').textContent = 'Campo obrigatório';
+    $('pwErr').classList.add('show');
+    valid = false;
+  } else if (senha.length < 6) {
+    $('senha').classList.add('invalid');
+    $('pwErr').classList.add('show');
+    valid = false;
+  }
+  if (!valid) return;
+
+  // Loading state
+  $('btnTxt').style.display = 'none';
+  $('btnSpin').style.display = 'flex';
+  $('btnLogin').disabled = true;
+  $('loadingOv').classList.add('show');
+
+  const { error } = recoveryMode
+    ? await sb.auth.updateUser({ password: senha })
+    : await sb.auth.signInWithPassword({ email, password: senha });
+
+  $('loadingOv').classList.remove('show');
+  $('btnTxt').style.display = '';
+  $('btnSpin').style.display = 'none';
+  $('btnLogin').disabled = false;
+
+  if (!error) {
+    // SUCCESS → redirect to Dashboard
+    $('btnTxt').textContent = recoveryMode ? '✓ Senha salva…' : '✓ Entrando…';
+    $('btnLogin').style.background = 'linear-gradient(135deg,#16a45f,#1db870)';
+    setTimeout(() => { window.location.href = 'Dashboard.html'; }, 800);
+  } else {
+    // ERROR state
+    const msg = error.message || '';
+    $('errMsg').textContent = recoveryMode
+      ? (/different|same/i.test(msg) ? 'A nova senha precisa ser diferente da atual.' : 'Não foi possível salvar a senha. Peça um novo link e tente de novo.')
+      : /confirm/i.test(msg) ? 'Este e-mail ainda não foi confirmado.'
+      : /rate|seconds/i.test(msg) ? 'Muitas tentativas. Aguarde alguns minutos.'
+      : 'E-mail ou senha incorretos. Verifique e tente novamente.';
+    $('errBanner').classList.add('show');
+    if (!recoveryMode) $('email').classList.add('invalid');
+    $('senha').classList.add('invalid');
+  }
+});
+
+// Clear inline errors on input
+$('email').addEventListener('input', () => { $('email').classList.remove('invalid'); $('emailErr').classList.remove('show'); $('errBanner').classList.remove('show'); });
+$('senha').addEventListener('input', () => { $('senha').classList.remove('invalid'); $('pwErr').classList.remove('show'); $('errBanner').classList.remove('show'); });
+</script>
+</body>
+</html>

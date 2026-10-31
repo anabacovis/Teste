@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — Agência OS</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+/* ===== layout ===== */
+.db-wrap { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; margin-bottom:18px; }
+.db-body { display:grid; grid-template-columns:1fr 380px; gap:18px; align-items:start; }
+.db-left  { display:flex; flex-direction:column; gap:18px; }
+.db-right { display:flex; flex-direction:column; gap:18px; }
+
+/* ===== topbar ===== */
+.topbar .sub { color:var(--muted); font-size:15px; margin-top:4px; }
+.topbar-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+
+/* ===== KPI cards ===== */
+.kcard { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:18px 20px; display:flex; align-items:center; gap:15px; text-decoration:none; transition:box-shadow .15s; }
+.kcard:hover { box-shadow:var(--shadow-lg); }
+.kcard .kic { width:46px; height:46px; border-radius:13px; display:grid; place-items:center; flex-shrink:0; color:#fff; }
+.kcard .kic svg { width:22px; height:22px; }
+.kcard .kval { font-size:28px; font-weight:800; line-height:1; color:var(--ink); }
+.kcard .klbl { font-size:12.5px; font-weight:600; color:var(--muted); margin-top:4px; }
+.kcard .kdiff { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.kcard .kdiff span { font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:7px; }
+.kcard.k-ok .kval { color:var(--green); }
+.kcard.k-warn .kval { color:var(--red); }
+.kcard.k-amber .kval { color:var(--amber); }
+.kcard.k-blue .kval { color:var(--blue); }
+
+/* ===== card shell ===== */
+.panel { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); }
+.panel-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-2); }
+.panel-head h3 { margin:0; font-size:16px; font-weight:800; color:var(--ink); }
+.panel-head a { font-size:13px; font-weight:700; color:var(--primary); text-decoration:none; }
+.panel-head a:hover { text-decoration:underline; }
+.panel-body { padding:18px 20px; }
+
+/* ===== mini badge ===== */
+.mbadge { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; padding:4px 10px; border-radius:8px; }
+
+/* ===== Progresso do mês ===== */
+.month-hero { padding:20px; display:flex; align-items:center; gap:24px; }
+.donut-wrap { position:relative; flex-shrink:0; }
+.donut-wrap .dn-label { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.dn-pct { font-size:26px; font-weight:800; color:var(--ink); line-height:1; }
+.dn-sub { font-size:11px; font-weight:700; color:var(--muted); margin-top:2px; }
+.month-stats { flex:1; display:flex; flex-direction:column; gap:12px; }
+.ms-row { display:flex; align-items:center; gap:12px; }
+.ms-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+.ms-lbl { font-size:13.5px; font-weight:600; color:var(--ink-soft); min-width:100px; }
+.ms-bar { flex:1; height:8px; background:var(--surface-2); border-radius:6px; overflow:hidden; border:1px solid var(--border-2); }
+.ms-bar-fill { height:100%; border-radius:6px; }
+.ms-val { font-size:13.5px; font-weight:800; color:var(--ink); width:32px; text-align:right; }
+
+/* ===== Clientes ===== */
+.client-rows { display:flex; flex-direction:column; gap:0; }
+.cr { display:flex; align-items:center; gap:13px; padding:11px 20px; border-bottom:1px solid var(--border-2); }
+.cr:last-child { border-bottom:none; }
+.cr-logo { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:11.5px; flex-shrink:0; }
+.cr-name { font-size:14px; font-weight:700; color:var(--ink); min-width:130px; }
+.cr-bar { flex:1; height:8px; background:var(--surface-2); border-radius:6px; overflow:hidden; border:1px solid var(--border-2); }
+.cr-fill { height:100%; border-radius:6px; background:var(--grad); }
+.cr-n { font-size:13.5px; font-weight:800; color:var(--ink); width:28px; text-align:right; }
+.cr-done { font-size:12px; font-weight:700; color:var(--muted); width:34px; text-align:right; }
+
+/* ===== Equipe ===== */
+.team-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:16px; }
+.team-card { background:var(--surface-2); border:1px solid var(--border-2); border-radius:14px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.tc-av { width:46px; height:46px; border-radius:13px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:18px; }
+.tc-name { font-size:15px; font-weight:800; color:var(--ink); }
+.tc-role { font-size:11.5px; font-weight:600; color:var(--muted); margin-top:-6px; }
+.tc-n { font-size:30px; font-weight:800; color:var(--ink); line-height:1; }
+.tc-sub { font-size:12px; font-weight:600; color:var(--muted); margin-top:-4px; }
+.tc-ring { width:64px; height:64px; position:relative; }
+.tc-ring svg { transform:rotate(-90deg); }
+.tc-ring .pct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:var(--ink); }
+
+/* ===== Financeiro mini ===== */
+.fin-mini { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:16px; }
+.fm { background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:13px 14px; }
+.fm .fval { font-size:18px; font-weight:800; color:var(--ink); line-height:1.1; }
+.fm .flbl { font-size:11.5px; font-weight:700; color:var(--muted); margin-top:5px; }
+.fm-total { grid-column:1/-1; }
+.fm-total .fval { font-size:22px; color:var(--primary); }
+
+/* ===== Hoje feed ===== */
+.hoje-list { display:flex; flex-direction:column; }
+.hj { display:flex; align-items:center; gap:13px; padding:12px 20px; border-bottom:1px solid var(--border-2); text-decoration:none; transition:background .12s; }
+.hj:last-child { border-bottom:none; }
+.hj:hover { background:var(--surface-2); }
+.hj-ic { width:38px; height:38px; border-radius:11px; display:grid; place-items:center; flex-shrink:0; }
+.hj-ic svg { width:18px; height:18px; }
+.hj-body { flex:1; min-width:0; }
+.hj-title { font-size:14px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hj-sub { font-size:12px; font-weight:600; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hj-right { display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0; }
+.hj-due { font-size:12px; font-weight:700; color:var(--muted); }
+.hj-due.late { color:var(--red); }
+
+/* ===== Próximas ===== */
+.prox-list { display:flex; flex-direction:column; }
+.px { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--border-2); }
+.px:last-child { border-bottom:none; }
+.px-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.px-name { font-size:13px; font-weight:700; color:var(--ink); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.px-client { font-size:11.5px; font-weight:700; color:var(--muted-2); }
+.px-date { font-size:12px; font-weight:700; color:var(--ink-soft); flex-shrink:0; }
+
+/* ===== Vazio ===== */
+.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:30px 20px; color:var(--muted); font-size:14px; font-weight:600; }
+.empty-state svg { width:36px; height:36px; opacity:.35; }
+
+/* ===== Mobile ===== */
+@media (max-width:980px){
+  .db-wrap { grid-template-columns:1fr 1fr; }
+  .db-body { grid-template-columns:1fr; }
+  .db-right { order:-1; }
+  .fin-mini { grid-template-columns:1fr 1fr; }
+  .fm-total { grid-column:1/-1; }
+}
+@media (max-width:600px){
+  .db-wrap { grid-template-columns:1fr 1fr; gap:10px; }
+  .kcard { padding:14px; gap:11px; }
+  .kcard .kval { font-size:22px; }
+  .kcard .kdiff { display:none; }
+  .month-hero { flex-direction:column; gap:16px; }
+  .team-grid { grid-template-columns:1fr 1fr; }
+  .cr-name { min-width:90px; font-size:13px; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js" data-guard></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar" data-active="dashboard"></div>
+  <div id="scrim" class="scrim" onclick="toggleSidebar()"></div>
+
+  <main class="main">
+    <!-- mobile top -->
+    <div class="mobile-top">
+      <button onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <span class="mt-brand">Dashboard</span>
+      <div style="display:flex;gap:8px">
+        <a href="Hoje.html" style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.12);border:none;color:#fff;display:grid;place-items:center;cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div>
+        <h2 id="greeting">Bom dia, Ana ☀️</h2>
+        <p class="sub" id="dateLabel">Carregando…</p>
+      </div>
+      <div class="topbar-actions">
+        <a href="Hoje.html" class="btn btn-ghost">Ver foco do dia</a>
+        <a href="Producao.html" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Produção
+        </a>
+      </div>
+    </header>
+
+    <!-- KPI strip -->
+    <section class="db-wrap" id="kpiStrip"></section>
+
+    <!-- Body -->
+    <div class="db-body">
+      <!-- LEFT -->
+      <div class="db-left">
+
+        <!-- Progresso do mês -->
+        <div class="panel">
+          <div class="panel-head"><h3>Progresso — Junho 2025</h3><a href="Producao.html">Ver tudo →</a></div>
+          <div class="month-hero">
+            <div class="donut-wrap">
+              <svg width="110" height="110" viewBox="0 0 110 110" id="donutSvg"></svg>
+              <div class="dn-label"><span class="dn-pct" id="donutPct">—</span><span class="dn-sub">concluído</span></div>
+            </div>
+            <div class="month-stats" id="monthStats"></div>
+          </div>
+        </div>
+
+        <!-- Tarefas de hoje -->
+        <div class="panel">
+          <div class="panel-head"><h3>Entregas de hoje</h3><a href="Hoje.html">Ver Hoje →</a></div>
+          <div class="hoje-list" id="hojeList"></div>
+        </div>
+
+        <!-- Clientes -->
+        <div class="panel">
+          <div class="panel-head"><h3>Produção por cliente</h3><a href="Clientes.html">Clientes →</a></div>
+          <div class="client-rows" id="clientRows"></div>
+        </div>
+
+      </div><!-- /left -->
+
+      <!-- RIGHT -->
+      <div class="db-right">
+
+        <!-- Equipe -->
+        <div class="panel">
+          <div class="panel-head"><h3>Equipe</h3></div>
+          <div class="team-grid" id="teamGrid"></div>
+        </div>
+
+        <!-- Financeiro -->
+        <div class="panel">
+          <div class="panel-head"><h3>Financeiro — Junho</h3><a href="Financeiro.html">Ver →</a></div>
+          <div class="fin-mini" id="finMini"></div>
+        </div>
+
+        <!-- Próximas entregas -->
+        <div class="panel">
+          <div class="panel-head"><h3>Próximas entregas</h3><a href="Producao.html">Todas →</a></div>
+          <div class="prox-list" id="proxList"></div>
+        </div>
+
+      </div><!-- /right -->
+    </div><!-- /body -->
+  </main>
+</div>
+
+<script src="assets/sidebar.js"></script>
+<script src="assets/data.js"></script>
+<script>
+/* ============= Greeting + Date ============= */
+(function(){
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent = (h<12?'Bom dia, Ana ☀️':h<18?'Boa tarde, Ana 🌤️':'Boa noite, Ana 🌙');
+  const days=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const now=new Date();
+  document.getElementById('dateLabel').textContent=days[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()]+' · Referência: 05/06/2025';
+})();
+
+/* ============= KPIs ============= */
+(function(){
+  const total  = ROWS.length;
+  const pub    = ROWS.filter(r=>r.status==='publicado').length;
+  const agend  = ROWS.filter(r=>r.status==='agendado').length;
+  const late   = ROWS.filter(r=>r.late).length;
+  const aprov  = ROWS.filter(r=>r.status==='aprovacao').length;
+  const pct    = Math.round(((pub+agend)/total)*100);
+
+  const icon = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const kpis = [
+    { lbl:'Total de entregas', val:total, bg:'var(--tile-purple)', cls:'', icon:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>', tag:'Junho 2025', tagCls:'background:var(--violet-bg);color:var(--violet)' },
+    { lbl:'Publicadas / Agendadas', val:pub+' + '+agend, bg:'var(--tile-green)', cls:'k-ok', icon:'<path d="m20 6-11 11-5-5"/>', tag:pct+'% concluído', tagCls:'background:var(--green-bg);color:var(--green)' },
+    { lbl:'Atrasadas', val:late||0, bg:'var(--tile-red)', cls:late>0?'k-warn':'', icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', tag:late>0?'Atenção':'Tudo em dia', tagCls:late>0?'background:var(--red-bg);color:var(--red)':'background:var(--green-bg);color:var(--green)' },
+    { lbl:'Em aprovação', val:aprov||0, bg:'var(--tile-yellow)', cls:aprov>0?'k-amber':'', icon:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>', tag:aprov>0?'Aguardando':'Nenhuma pendente', tagCls:aprov>0?'background:var(--amber-bg);color:var(--amber)':'background:var(--green-bg);color:var(--green)' },
+  ];
+  document.getElementById('kpiStrip').innerHTML = kpis.map(k=>`
+    <div class="kcard ${k.cls}">
+      <span class="kic" style="background:${k.bg}">${icon(k.icon)}</span>
+      <div><div class="kval">${k.val}</div><div class="klbl">${k.lbl}</div></div>
+      <div class="kdiff"><span style="${k.tagCls};border-radius:8px;font-size:11.5px;font-weight:700;padding:3px 9px;white-space:nowrap">${k.tag}</span></div>
+    </div>`).join('');
+})();
+
+/* ============= Donut + Month Stats ============= */
+(function(){
+  const total   = ROWS.length;
+  const pub     = ROWS.filter(r=>r.status==='publicado').length;
+  const agend   = ROWS.filter(r=>r.status==='agendado').length;
+  const brief   = ROWS.filter(r=>r.status==='briefing').length;
+  const pct     = Math.round(((pub+agend)/total)*100);
+
+  // Donut SVG (two arcs)
+  const cx=55,cy=55,r=42,stroke=10;
+  const circ=2*Math.PI*r;
+  const pubFill=(pub/total)*circ;
+  const agendFill=(agend/total)*circ;
+  const svgEl=document.getElementById('donutSvg');
+  svgEl.innerHTML=`
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eef0f6" stroke-width="${stroke}"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--green)" stroke-width="${stroke}"
+      stroke-dasharray="${pubFill} ${circ-pubFill}" stroke-dashoffset="${-circ*0.25}" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--violet)" stroke-width="${stroke}" opacity=".65"
+      stroke-dasharray="${agendFill} ${circ-agendFill}" stroke-dashoffset="${-(circ*0.25+pubFill)}" stroke-linecap="round"/>`;
+  document.getElementById('donutPct').textContent=pct+'%';
+
+  const stats=[
+    {lbl:'Publicado',  val:pub,   total,  color:'var(--green)',  bg:'var(--tile-green)'},
+    {lbl:'Agendado',   val:agend, total,  color:'var(--violet)', bg:'linear-gradient(135deg,#8b5cf6,#6c63ff)'},
+    {lbl:'Em briefing',val:brief, total,  color:'var(--muted-2)',bg:'#d0d4de'},
+  ];
+  document.getElementById('monthStats').innerHTML=stats.map(s=>`
+    <div class="ms-row">
+      <span class="ms-dot" style="background:${s.color}"></span>
+      <span class="ms-lbl">${s.lbl}</span>
+      <div class="ms-bar"><div class="ms-bar-fill" style="width:${Math.round(s.val/s.total*100)}%;background:${s.color}"></div></div>
+      <span class="ms-val">${s.val}</span>
+    </div>`).join('');
+})();
+
+/* ============= Hoje list ============= */
+(function(){
+  const hoje = ROWS.filter(r=>r.prazoDay===TODAY && r.status!=='publicado');
+  const pubHoje = ROWS.filter(r=>r.prazoDay===TODAY && r.status==='publicado');
+  const el = document.getElementById('hojeList');
+  const all = [...hoje, ...pubHoje.slice(0,2)];
+  if(!all.length){
+    el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Nenhuma entrega pendente para hoje</div>`;
+    return;
+  }
+  const typeIco = t => t==='yt'?'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>':t==='reels'||t==='short'?'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>' :'<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.6-3.6a2 2 0 0 0-2.8 0L6 21"/>';
+  const typeBg = t => t==='yt'?'background:var(--red-bg);color:var(--red)':t==='reels'||t==='short'?'background:var(--violet-bg);color:var(--violet)':'background:var(--grad-soft);color:var(--primary)';
+  el.innerHTML = all.slice(0,6).map(r=>{
+    const cl=CLIENTS[r.client], p=PEOPLE[r.resp], st=STATUS[r.status];
+    return `<a class="hj" href="Hoje.html">
+      <span class="hj-ic" style="${typeBg(r.type)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${typeIco(r.type)}</svg></span>
+      <div class="hj-body"><div class="hj-title">${r.title}</div><div class="hj-sub">${cl.name} · ${p.n}</div></div>
+      <div class="hj-right"><span class="badge-status ${st.cls}" style="font-size:11.5px;padding:4px 10px">${st.l}</span><span class="hj-due${r.late?' late':''}">05/06</span></div>
+    </a>`;
+  }).join('');
+})();
+
+/* ============= Clientes ============= */
+(function(){
+  const keys=Object.keys(CLIENTS);
+  const max=Math.max(...keys.map(k=>ROWS.filter(r=>r.client===k).length));
+  document.getElementById('clientRows').innerHTML=keys.map(k=>{
+    const cl=CLIENTS[k];
+    const total=ROWS.filter(r=>r.client===k).length;
+    const done=ROWS.filter(r=>r.client===k&&(r.status==='publicado'||r.status==='agendado')).length;
+    const w=Math.round((total/max)*100);
+    return `<div class="cr">
+      <span class="cr-logo" style="background:${cl.bg}">${cl.logo}</span>
+      <span class="cr-name">${cl.name}</span>
+      <div class="cr-bar"><div class="cr-fill" style="width:${w}%"></div></div>
+      <span class="cr-n">${total}</span>
+      <span class="cr-done">${done}✓</span>
+    </div>`;
+  }).join('');
+})();
+
+/* ============= Equipe ============= */
+(function(){
+  const anaRows=ROWS.filter(r=>r.resp==='ana');
+  const nicRows=ROWS.filter(r=>r.resp==='nicole');
+  const anaDone=anaRows.filter(r=>r.status==='publicado'||r.status==='agendado').length;
+  const nicDone=nicRows.filter(r=>r.status==='publicado'||r.status==='agendado').length;
+  function ring(done,total,color){
+    const r=28,cx=32,cy=32,circ=2*Math.PI*r,fill=(done/Math.max(total,1))*circ,pct=Math.round(done/Math.max(total,1)*100);
+    return `<div class="tc-ring" style="width:64px;height:64px;position:relative">
+      <svg width="64" height="64" viewBox="0 0 64 64" style="transform:rotate(-90deg)">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eef0f6" stroke-width="8"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="8"
+          stroke-dasharray="${fill} ${circ-fill}" stroke-linecap="round"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--ink)">${pct}%</div>
+    </div>`;
+  }
+  document.getElementById('teamGrid').innerHTML=`
+    <div class="team-card">
+      <span class="tc-av" style="background:var(--tile-orange)">A</span>
+      <div class="tc-name">Ana</div><div class="tc-role">Gestora</div>
+      ${ring(anaDone,anaRows.length,'var(--green)')}
+      <div class="tc-n">${anaRows.length}</div>
+      <div class="tc-sub">${anaDone} concluídas</div>
+    </div>
+    <div class="team-card">
+      <span class="tc-av" style="background:var(--tile-blue)">N</span>
+      <div class="tc-name">Nicole</div><div class="tc-role">Audiovisual</div>
+      ${ring(nicDone,nicRows.length,'var(--blue)')}
+      <div class="tc-n">${nicRows.length}</div>
+      <div class="tc-sub">${nicDone} concluídas</div>
+    </div>`;
+})();
+
+/* ============= Financeiro ============= */
+(function(){
+  const jun = BILLING.filter(b=>b.comp==='jun');
+  const val = b => b.valor || 0;                       // Bells = permuta (null) → não soma
+  const previsto = jun.filter(b=>b.status!=='pago'&&b.status!=='cancelado').reduce((s,b)=>s+val(b),0);
+  const pago     = jun.filter(b=>b.status==='pago').reduce((s,b)=>s+val(b),0);
+  const vencendo = jun.filter(b=>b.status==='vencendo').reduce((s,b)=>s+val(b),0);
+  const total_mes= jun.reduce((s,b)=>s+val(b),0);
+  const fmt = v => 'R$ '+v.toLocaleString('pt-BR');
+  document.getElementById('finMini').innerHTML=`
+    <div class="fm fm-total"><div class="fval">${fmt(total_mes)}</div><div class="flbl">Receita Junho (prev.)</div></div>
+    <div class="fm"><div class="fval" style="color:var(--green)">${fmt(pago)}</div><div class="flbl">Recebido</div></div>
+    <div class="fm"><div class="fval" style="color:var(--amber)">${fmt(vencendo)}</div><div class="flbl">Vencendo hoje</div></div>
+    <div class="fm"><div class="fval" style="color:var(--ink-soft)">${fmt(previsto)}</div><div class="flbl">A receber</div></div>`;
+})();
+
+/* ============= Próximas ============= */
+(function(){
+  const upcoming = ROWS
+    .filter(r=>r.status!=='publicado' && r.prazoDay>=TODAY)
+    .sort((a,b)=>a.prazoDay-b.prazoDay)
+    .slice(0,8);
+  const stColors = {briefing:'var(--gray)',producao:'var(--blue)',aprovacao:'var(--amber)',correcao:'#e8633f',agendado:'var(--violet)',publicado:'var(--green)'};
+  document.getElementById('proxList').innerHTML = upcoming.map(r=>{
+    const cl=CLIENTS[r.client];
+    return `<div class="px">
+      <span class="px-dot" style="background:${stColors[r.status]}"></span>
+      <span class="px-name">${r.title}</span>
+      <span class="px-client">${cl.logo}</span>
+      <span class="px-date">${r.prazo}</span>
+    </div>`;
+  }).join('');
+})();
+</script>
+</body>
+</html>

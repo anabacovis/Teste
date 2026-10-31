@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Estados — Agência OS</title>
+<link rel="stylesheet" href="assets/app.css"/>
+<style>
+.demo-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; margin:16px 0 32px; }
+.demo-card { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-lg); box-shadow:var(--shadow); overflow:hidden; }
+.demo-label { font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--muted); padding:12px 18px; background:var(--surface-2); border-bottom:1px solid var(--border-2); }
+.demo-body { min-height:180px; display:flex; align-items:stretch; }
+.demo-body > * { flex:1; }
+.sec { padding:28px 40px 36px; border-top:1px solid var(--border); max-width:1040px; }
+.sec:first-child { border-top:none; }
+.sec h2 { font-size:22px; font-weight:800; color:var(--ink); margin:0 0 6px; }
+.sec .lead { font-size:14px; color:var(--ink-soft); margin:0 0 20px; line-height:1.55; }
+.code-row { background:#0f1729; border-radius:12px; padding:14px 18px; font-family:'SF Mono',Consolas,monospace; font-size:13px; color:#c8d3f5; line-height:1.6; margin:8px 0 20px; overflow-x:auto; }
+.chip { display:inline-flex; align-items:center; padding:3px 10px; border-radius:7px; font-size:12px; font-weight:700; }
+.chip-violet { background:var(--violet-bg); color:var(--violet); }
+.chip-green { background:var(--green-bg); color:var(--green); }
+.chip-amber { background:var(--amber-bg); color:var(--amber); }
+.chip-red { background:var(--red-bg); color:var(--red); }
+.chip-blue { background:var(--blue-bg); color:var(--blue); }
+@media (max-width:900px){ .app{grid-template-columns:1fr} .sidebar{display:none} .main{border-radius:0;padding:16px} .demo-grid{grid-template-columns:1fr} }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js" data-guard></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar" data-active="dashboard"></div>
+  <div id="scrim" class="scrim" onclick="toggleSidebar()"></div>
+  <main class="main">
+    <div class="mobile-top">
+      <button onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <span class="mt-brand">Estados</span><span style="width:40px"></span>
+    </div>
+
+    <header class="topbar" style="margin-bottom:24px;">
+      <div>
+        <h2>Estados do sistema</h2>
+        <p class="sub">Referência visual e de código para loading, vazio, erro e outros estados obrigatórios.</p>
+      </div>
+      <div class="topbar-actions">
+        <span class="pill"><span class="chip chip-green">B3 — Bloqueador resolvido</span></span>
+      </div>
+    </header>
+
+    <!-- SKELETON -->
+    <div class="sec">
+      <h2>Loading — Skeleton</h2>
+      <p class="lead">Exibido enquanto dados carregam do Supabase. Nunca mostrar tela em branco.</p>
+      <div class="code-row">AgenciaStates.skeleton(container, rows=5, cols=4)  // tabela<br>AgenciaStates.skeletonCards(container, count=4)     // cards</div>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <div class="demo-label">Skeleton — Tabela (Produção, Financeiro)</div>
+          <div class="demo-body" id="demo-sk-table"></div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-label">Skeleton — Cards (Hoje, Ana, Nicole)</div>
+          <div class="demo-body" id="demo-sk-cards" style="padding:14px;flex-direction:column;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPTY -->
+    <div class="sec">
+      <h2>Empty — Sem dados</h2>
+      <p class="lead">Quando nenhum item corresponde ao filtro aplicado, ou quando a lista realmente está vazia.</p>
+      <div class="code-row">AgenciaStates.empty(container, { title, desc, action, onAction })</div>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <div class="demo-label">Produção — Nenhuma entrega</div>
+          <div class="demo-body" id="demo-empty-prod"></div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-label">Aprovações — Nenhuma aprovação pendente</div>
+          <div class="demo-body" id="demo-empty-apr"></div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-label">Financeiro — Nenhuma cobrança</div>
+          <div class="demo-body" id="demo-empty-fin"></div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-label">Arquivos — Nenhum link</div>
+          <div class="demo-body" id="demo-empty-ark"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="sec">
+      <h2>Error — Falha de carregamento</h2>
+      <p class="lead">Quando a query falha (rede, timeout, servidor). Sempre oferecer "Tentar novamente".</p>
+      <div class="code-row">AgenciaStates.error(container, { msg, onRetry, details })</div>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <div class="demo-label">Erro de rede</div>
+          <div class="demo-body" id="demo-err-net"></div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-label">Erro do servidor (500)</div>
+          <div class="demo-body" id="demo-err-srv"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NO PERMISSION -->
+    <div class="sec">
+      <h2>Sem permissão</h2>
+      <p class="lead">Quando o usuário tenta acessar conteúdo que o papel (role) não autoriza.</p>
+      <div class="code-row">AgenciaStates.noPermission(container, { msg })</div>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <div class="demo-label">Financeiro — sem permissão</div>
+          <div class="demo-body" id="demo-noperm"></div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-label">Admin — usuário não-admin</div>
+          <div class="demo-body" id="demo-noperm2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OFFLINE -->
+    <div class="sec">
+      <h2>Sem conexão</h2>
+      <p class="lead">Quando o dispositivo perde a conexão com a internet.</p>
+      <div class="code-row">AgenciaStates.offline(container)</div>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <div class="demo-label">Offline</div>
+          <div class="demo-body" id="demo-offline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUTTON STATES -->
+    <div class="sec">
+      <h2>Estados de botão</h2>
+      <p class="lead">Para ações assíncronas — salvar, criar, marcar como pago, etc.</p>
+      <div class="code-row">AgenciaStates.saving(btnEl)          // desabilita + spinner<br>AgenciaStates.saved(btnEl, label)    // verde + check<br>AgenciaStates.resetBtn(btnEl, label) // restaura</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;">
+        <button class="btn btn-primary" id="demoSaveBtn" style="min-width:160px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+          Salvar entrega
+        </button>
+        <button class="btn btn-ghost" id="demoPayBtn" style="min-width:160px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83"/></svg>
+          Marcar como pago
+        </button>
+      </div>
+      <p style="font-size:13px;color:var(--muted);font-weight:600;">Clique nos botões para ver a sequência de estados.</p>
+    </div>
+
+    <!-- TOAST -->
+    <div class="sec">
+      <h2>Toast — Confirmações rápidas</h2>
+      <p class="lead">Para confirmações não-críticas de ação. Aparece na base da tela por 2.2s.</p>
+      <div class="code-row">AgenciaStates.toast('Mensagem aqui')              // sucesso<br>AgenciaStates.toast('Erro ao salvar', 'error')   // erro</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+        <button class="btn btn-ghost" onclick="AgenciaStates.toast('Entrega concluída! 🎉')">Toast sucesso</button>
+        <button class="btn btn-ghost" onclick="AgenciaStates.toast('Observação salva')">Toast observação</button>
+        <button class="btn btn-ghost" onclick="AgenciaStates.toast('Status atualizado: Produção')">Toast status</button>
+        <button class="btn btn-ghost" onclick="AgenciaStates.toast('Erro ao salvar. Tente novamente.', 'error')">Toast erro</button>
+      </div>
+    </div>
+
+    <!-- NOVA DEMANDA DEMO -->
+    <div class="sec">
+      <h2>Modal Nova Demanda (B4)</h2>
+      <p class="lead">Formulário completo com validações, estados de salvando/salvo/erro e integração Supabase-ready.</p>
+      <button class="btn btn-primary" onclick="NovaDemanda.open()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Abrir Nova Demanda
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<script src="assets/sidebar.js"></script>
+<script src="assets/states.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/nova-demanda.js"></script>
+<script>
+// Render all demos on load
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Skeleton
+  AgenciaStates.skeleton(document.getElementById('demo-sk-table'), 5, 5);
+  AgenciaStates.skeletonCards(document.getElementById('demo-sk-cards'), 3);
+
+  // Empty states
+  AgenciaStates.empty(document.getElementById('demo-empty-prod'), { title:'Nenhuma entrega encontrada', desc:'Tente remover os filtros ou criar uma nova demanda.', action:'+ Nova Demanda', onAction: ()=>NovaDemanda.open() });
+  AgenciaStates.empty(document.getElementById('demo-empty-apr'), { title:'Sem aprovações pendentes', desc:'Ótimo! Todas as aprovações foram processadas.', icon:'empty' });
+  AgenciaStates.empty(document.getElementById('demo-empty-fin'), { title:'Nenhuma cobrança neste período', desc:'Selecione outro mês ou crie uma nova cobrança.', action:'+ Nova cobrança' });
+  AgenciaStates.empty(document.getElementById('demo-empty-ark'), { title:'Nenhum link cadastrado', desc:'Adicione links do Drive, Notion ou outros materiais.', action:'+ Novo link' });
+
+  // Error states
+  AgenciaStates.error(document.getElementById('demo-err-net'), { msg:'Não foi possível conectar ao servidor. Verifique sua conexão.', onRetry:()=>AgenciaStates.toast('Tentando novamente…') });
+  AgenciaStates.error(document.getElementById('demo-err-srv'), { msg:'Erro interno do servidor ao carregar as entregas.', details:'HTTP 500 · /api/deliverables', onRetry:()=>AgenciaStates.toast('Recarregando…') });
+
+  // No permission
+  AgenciaStates.noPermission(document.getElementById('demo-noperm'), { msg:'Você não tem acesso ao módulo Financeiro. Fale com o administrador.' });
+  AgenciaStates.noPermission(document.getElementById('demo-noperm2'), { msg:'Apenas administradores podem acessar as configurações do sistema.' });
+
+  // Offline
+  AgenciaStates.offline(document.getElementById('demo-offline'));
+});
+
+// Button state demo
+document.getElementById('demoSaveBtn').addEventListener('click', function(){
+  const btn = this;
+  AgenciaStates.saving(btn, 'Salvando…');
+  setTimeout(()=>{ AgenciaStates.saved(btn, 'Salvo'); setTimeout(()=>AgenciaStates.resetBtn(btn, 'Salvar entrega'), 2000); }, 1500);
+});
+document.getElementById('demoPayBtn').addEventListener('click', function(){
+  const btn = this;
+  AgenciaStates.saving(btn, 'Processando…');
+  setTimeout(()=>{ AgenciaStates.saved(btn, 'Pago ✓'); setTimeout(()=>AgenciaStates.resetBtn(btn, 'Marcar como pago'), 2000); }, 1200);
+});
+</script>
+</body>
+</html>

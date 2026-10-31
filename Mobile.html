@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mobile — Connect OS</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+  body { background: var(--frame); color: var(--on-dark); min-height: 100vh; }
+  .wrap { padding: 38px 40px 60px; max-width: 1600px; margin: 0 auto; }
+  /* Desktop fallback — show a clear intro before the rail */
+  @media (min-width: 760px) {
+    .wrap { display: flex; flex-direction: column; min-height: 100vh; }
+    .rail { flex: 1; }
+  }
+  .head { max-width: 760px; margin: 0 auto 36px; text-align: center; }
+  .head h1 { font-size: 34px; font-weight: 800; letter-spacing: -.6px; margin: 0 0 10px; color: #fff; }
+  .head p { font-size: 15.5px; color: var(--on-dark-mut); font-weight: 500; line-height: 1.55; margin: 0; }
+  .head .badge { display: inline-flex; align-items: center; gap: 7px; background: rgba(108,99,255,.16); color: #b7b1ff; font-size: 12.5px; font-weight: 700; padding: 6px 13px; border-radius: 20px; margin-bottom: 16px; }
+  .head .badge svg { width: 14px; height: 14px; }
+
+  .rail { display: flex; gap: 30px; overflow-x: auto; padding: 8px 4px 26px; scroll-snap-type: x mandatory; }
+  .rail::-webkit-scrollbar { height: 8px; }
+  .rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 8px; }
+
+  .phone { scroll-snap-align: center; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .phone-cap { display: flex; align-items: center; gap: 9px; }
+  .phone-cap .pn { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 800; }
+  .phone-cap b { font-size: 15px; font-weight: 700; color: #fff; }
+  .phone-cap small { font-size: 12.5px; color: var(--on-dark-mut); font-weight: 600; }
+
+  .device {
+    width: 408px; height: 840px; border-radius: 46px; background: #0a0e1a;
+    padding: 11px; box-shadow: 0 0 0 2px #232c44, 0 30px 70px rgba(0,0,0,.5); position: relative;
+  }
+  .device::before {
+    content: ''; position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 28px; background: #0a0e1a; border-radius: 0 0 16px 16px; z-index: 3;
+  }
+  .screen { width: 386px; height: 818px; border-radius: 36px; overflow: hidden; background: var(--canvas); position: relative; }
+  .screen iframe { width: 386px; height: 818px; border: none; display: block; }
+  /* tap-through guard while scrolling the rail */
+  .hint { text-align: center; color: var(--on-dark-mut); font-size: 13px; font-weight: 600; margin-top: 4px; }
+  .hint kbd { background: rgba(255,255,255,.1); border-radius: 6px; padding: 2px 7px; font-family: inherit; font-size: 12px; }
+
+  @media (max-width: 600px) { .wrap { padding: 24px 16px 50px; } .device { transform: scale(.82); transform-origin: top center; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js" data-guard></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M12 18h.01"/></svg>Versão mobile</span>
+      <h1>Operação no celular</h1>
+      <p>As mesmas telas, repensadas para o dia a dia no celular: cards empilhados, ação rápida sempre à mão, menu inferior fixo e zero tabela com scroll lateral. A página <b style="color:#fff">Hoje</b> é a porta de entrada.</p>
+    </div>
+
+    <div class="rail" id="rail">
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--tile-purple)">★</span><b>Hoje</b><small>· foco do dia</small></div>
+        <div class="device"><div class="screen"><iframe src="Hoje.html" title="Hoje" loading="lazy"></iframe></div></div>
+      </div>
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--tile-blue)">P</span><b>Produção</b><small>· tabela vira cards</small></div>
+        <div class="device"><div class="screen"><iframe src="Producao.html" title="Produção" loading="lazy"></iframe></div></div>
+      </div>
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--tile-yellow)">!</span><b>Aprovações</b><small>· SLA e ações</small></div>
+        <div class="device"><div class="screen"><iframe src="Aprovacoes.html" title="Aprovações" loading="lazy"></iframe></div></div>
+      </div>
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--tile-green)">$</span><b>Financeiro</b><small>· cobranças em cards</small></div>
+        <div class="device"><div class="screen"><iframe src="Financeiro.html" title="Financeiro" loading="lazy"></iframe></div></div>
+      </div>
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--tile-orange)">A</span><b>Ana</b><small>· carga individual</small></div>
+        <div class="device"><div class="screen"><iframe src="Ana.html" title="Ana" loading="lazy"></iframe></div></div>
+      </div>
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--tile-blue)">N</span><b>Nicole</b><small>· foco em vídeo</small></div>
+        <div class="device"><div class="screen"><iframe src="Nicole.html" title="Nicole" loading="lazy"></iframe></div></div>
+      </div>
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--tile-blue)">C</span><b>Calendário</b><small>· entregas por data</small></div>
+        <div class="device"><div class="screen"><iframe src="Calendario.html" title="Calendário" loading="lazy"></iframe></div></div>
+      </div>
+      <div class="phone">
+        <div class="phone-cap"><span class="pn" style="background:var(--grad)">⚙</span><b>Admin</b><small>· controle</small></div>
+        <div class="device"><div class="screen"><iframe src="Configuracoes.html" title="Admin" loading="lazy"></iframe></div></div>
+      </div>
+    </div>
+    <p class="hint">Arraste para o lado para ver todas as telas · cada moldura é a página real em 386&nbsp;px</p>
+  </div>
+</body>
+</html>

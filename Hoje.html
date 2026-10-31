@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hoje — Agência OS</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+  /* ---------- Hoje: foco do dia ---------- */
+  .focus-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px;
+  }
+  .focus {
+    background: var(--surface); border: 1px solid var(--border-2); border-radius: var(--r);
+    box-shadow: var(--shadow); padding: 16px 18px; display: flex; align-items: center; gap: 14px;
+  }
+  .focus .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: #fff; flex-shrink: 0; }
+  .focus .ico svg { width: 21px; height: 21px; }
+  .focus .n { font-size: 26px; font-weight: 800; line-height: 1; color: var(--ink); }
+  .focus .l { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px; }
+
+  /* ---------- Section label ---------- */
+  .sec-label {
+    display: flex; align-items: center; gap: 10px; margin: 30px 2px 14px; font-size: 14px; font-weight: 800;
+    letter-spacing: .2px; color: var(--ink-soft); text-transform: uppercase;
+  }
+  .sec-label .count { background: var(--gray-bg); color: var(--ink-soft); font-size: 12.5px; border-radius: 8px; padding: 3px 9px; }
+  .sec-label.danger { color: var(--red); }
+  .sec-label.danger .count { background: var(--red-bg); color: var(--red); }
+  .sec-label::after { content:''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ---------- Task card ---------- */
+  .tasks { display: flex; flex-direction: column; gap: 14px; }
+  .task {
+    background: var(--surface); border: 1px solid var(--border-2); border-radius: var(--r-lg);
+    box-shadow: var(--shadow); padding: 20px 22px;
+    display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "logo body actions"; gap: 20px; align-items: center;
+    transition: box-shadow .15s, border-color .15s, opacity .2s;
+  }
+  .task:hover { box-shadow: var(--shadow-lg); }
+  .task.overdue { border-color: #f7d4d2; }
+  .task.done { opacity: .55; }
+  .task.done .task-title { text-decoration: line-through; }
+
+  .task-logo { grid-area: logo; }
+  .client-logo {
+    width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
+    color: #fff; font-weight: 800; font-size: 19px; flex-shrink: 0;
+  }
+
+  .task-body { grid-area: body; min-width: 0; }
+  .task-tags { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+  .task-title { font-size: 19px; font-weight: 800; letter-spacing: -.3px; color: var(--ink); margin: 0 0 9px; }
+  .task-sub { font-weight: 600; color: var(--muted); }
+  .task-meta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; font-size: 13.5px; }
+  .task-meta .mi { display: inline-flex; align-items: center; gap: 7px; color: var(--ink-soft); font-weight: 600; }
+  .task-meta .mi svg { width: 15px; height: 15px; color: var(--muted-2); }
+  .task-meta .mi.client b { font-weight: 700; color: var(--ink); }
+  .resp-av { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; }
+  .due-late { color: var(--red); font-weight: 700; }
+
+  .task-actions { grid-area: actions; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+  .task-status-row { display: flex; align-items: center; gap: 10px; }
+  .qa-row { display: flex; align-items: center; gap: 8px; }
+  .qa {
+    display: inline-flex; align-items: center; gap: 7px; font-family: inherit; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 13px; font-size: 13px; font-weight: 700; color: var(--ink-soft); transition: background .12s, border-color .12s, color .12s;
+    white-space: nowrap;
+  }
+  .qa svg { width: 16px; height: 16px; }
+  .qa:hover { background: var(--surface-2); border-color: #dcdfe8; }
+  .qa-done { background: var(--green-bg); color: var(--green); border-color: transparent; }
+  .qa-done:hover { background: #d6f1e1; }
+  .qa.is-active { background: var(--violet-bg); color: var(--violet); border-color: transparent; }
+
+  /* note area */
+  .task-note { grid-column: 1 / -1; grid-area: auto; margin-top: 4px; }
+  .task-note[hidden] { display: none; }
+  .task-note textarea {
+    width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    font-family: inherit; font-size: 14px; color: var(--ink); resize: vertical; min-height: 70px; background: var(--surface-2);
+  }
+  .task-note textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
+  .note-actions { display: flex; gap: 8px; margin-top: 9px; }
+  .note-saved { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--green); }
+  .note-saved svg { width: 15px; height: 15px; }
+  .note-chip {
+    grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; background: var(--surface-2);
+    border: 1px dashed var(--border); border-radius: 12px; padding: 11px 14px; font-size: 13.5px; color: var(--ink-soft); font-weight: 600;
+  }
+  .note-chip svg { width: 16px; height: 16px; color: var(--violet); flex-shrink: 0; margin-top: 1px; }
+  .note-chip[hidden] { display: none; }
+
+  /* status popover */
+  .status-pop {
+    position: absolute; z-index: 50; background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; box-shadow: var(--shadow-pop); padding: 7px; min-width: 210px;
+  }
+  .status-pop .po-title { font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); padding: 8px 10px 6px; }
+  .status-pop button {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: none; background: none;
+    font-family: inherit; font-size: 14px; font-weight: 600; color: var(--ink); padding: 9px 10px; border-radius: 9px; cursor: pointer;
+  }
+  .status-pop button:hover { background: var(--surface-2); }
+  .status-pop button .sw { width: 9px; height: 9px; border-radius: 50%; }
+  .status-pop button .ck { margin-left: auto; width: 16px; height: 16px; color: var(--primary); }
+
+  .end-note { text-align: center; color: var(--muted); font-size: 14px; font-weight: 600; margin: 34px 0 0; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 13px 20px; border-radius: 13px; font-size: 14px; font-weight: 700;
+    box-shadow: var(--shadow-pop); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 80;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast svg { width: 18px; height: 18px; color: #4be08a; }
+
+  @media (max-width: 980px) {
+    .focus-strip { grid-template-columns: repeat(2, 1fr); }
+    .task { grid-template-columns: auto 1fr; grid-template-areas: "logo body" "actions actions" "note note"; gap: 14px 16px; }
+    .task-actions { align-items: stretch; }
+    .task-status-row { justify-content: space-between; }
+    .qa-row { flex-wrap: wrap; }
+    .qa { flex: 1; justify-content: center; }
+  }
+  @media (max-width: 560px) {
+    .focus-strip { grid-template-columns: 1fr; }
+    .task-title { font-size: 17px; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/auth.js" data-guard></script>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar" data-active="hoje"></div>
+  <div id="scrim" class="scrim" onclick="toggleSidebar()"></div>
+
+  <main class="main">
+    <div class="mobile-top">
+      <button onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <span class="mt-brand">Hoje</span>
+      <span style="width:40px"></span>
+    </div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div>
+        <h2>Foco de hoje 🎯</h2>
+        <p class="sub">Quinta, 5 de Junho · só o que precisa da sua ação agora.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>22 de Maio, 2025 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="m6 9 6 6 6-6"/></svg></button>
+        <button class="icon-btn" aria-label="Notificações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="dot">3</span></button>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Nova Demanda</button>
+      </div>
+    </header>
+
+    <!-- Foco do dia: contadores (sem gráficos) -->
+    <section class="focus-strip">
+      <div class="focus">
+        <span class="ico" style="background:var(--tile-red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <div><div class="n" style="color:var(--red)">2</div><div class="l">Atrasadas</div></div>
+      </div>
+      <div class="focus">
+        <span class="ico" style="background:var(--tile-purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+        <div><div class="n">4</div><div class="l">Para hoje</div></div>
+      </div>
+      <div class="focus">
+        <span class="ico" style="background:var(--tile-yellow)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></span>
+        <div><div class="n" style="color:var(--amber)">2</div><div class="l">Aprovações críticas</div></div>
+      </div>
+      <div class="focus">
+        <span class="ico" style="background:var(--tile-blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M12 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2.5"/></svg></span>
+        <div><div class="n" style="color:var(--blue)">3</div><div class="l">Vencem hoje</div></div>
+      </div>
+    </section>
+
+    <!-- ATRASADAS -->
+    <div class="sec-label danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+      Atrasadas <span class="count">2</span>
+    </div>
+    <div class="tasks">
+
+      <!-- Task 1 -->
+      <article class="task overdue" data-status="amber" data-prio="alta">
+        <div class="task-logo"><span class="client-logo" style="background:var(--tile-red)">BM</span></div>
+        <div class="task-body">
+          <div class="task-tags">
+            <span class="prio prio-alta"><span class="dot"></span>Alta</span>
+            <span class="tag post">Post</span>
+          </div>
+          <h3 class="task-title">Post 02 · <span class="task-sub">Cardápio Executivo</span></h3>
+          <div class="task-meta">
+            <span class="mi client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><b>Brasa Meat</b></span>
+            <span class="mi"><span class="resp-av" style="background:var(--tile-blue)">N</span>Nicole</span>
+            <span class="mi due-late"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Venceu ontem · 21/05</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <div class="task-status-row">
+            <span class="badge-status st-amber" data-status-label>Em aprovação</span>
+          </div>
+          <div class="qa-row">
+            <button class="qa qa-status" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Mudar status</button>
+            <button class="qa qa-open" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>Abrir</button>
+            <button class="qa qa-note" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Observação</button>
+            <button class="qa qa-done" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Concluir</button>
+          </div>
+        </div>
+        <div class="note-chip" hidden></div>
+        <div class="task-note" hidden>
+          <textarea placeholder="Escreva uma observação para a equipe ou cliente…"></textarea>
+          <div class="note-actions">
+            <button class="btn btn-primary qa-note-save" type="button" style="padding:9px 16px;font-size:13px">Salvar observação</button>
+            <button class="qa qa-note-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Task 2 -->
+      <article class="task overdue" data-status="blue" data-prio="media">
+        <div class="task-logo"><span class="client-logo" style="background:linear-gradient(135deg,#2bc4c4,#159c9c)">LCS</span></div>
+        <div class="task-body">
+          <div class="task-tags">
+            <span class="prio prio-media"><span class="dot"></span>Média</span>
+            <span class="tag story">Reels</span>
+          </div>
+          <h3 class="task-title">Reels Institucional · <span class="task-sub">Bastidores Maio</span></h3>
+          <div class="task-meta">
+            <span class="mi client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><b>LCS</b></span>
+            <span class="mi"><span class="resp-av" style="background:var(--tile-orange)">A</span>Ana</span>
+            <span class="mi due-late"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Venceu · 20/05</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <div class="task-status-row">
+            <span class="badge-status st-blue" data-status-label>Em produção</span>
+          </div>
+          <div class="qa-row">
+            <button class="qa qa-status" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Mudar status</button>
+            <button class="qa qa-open" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>Abrir</button>
+            <button class="qa qa-note" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Observação</button>
+            <button class="qa qa-done" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Concluir</button>
+          </div>
+        </div>
+        <div class="note-chip" hidden></div>
+        <div class="task-note" hidden>
+          <textarea placeholder="Escreva uma observação para a equipe ou cliente…"></textarea>
+          <div class="note-actions">
+            <button class="btn btn-primary qa-note-save" type="button" style="padding:9px 16px;font-size:13px">Salvar observação</button>
+            <button class="qa qa-note-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- PARA HOJE -->
+    <div class="sec-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      Para hoje <span class="count">4</span>
+    </div>
+    <div class="tasks">
+
+      <!-- Task 3 -->
+      <article class="task" data-status="blue" data-prio="alta">
+        <div class="task-logo"><span class="client-logo" style="background:linear-gradient(135deg,#2b3556,#161d33)">BP</span></div>
+        <div class="task-body">
+          <div class="task-tags">
+            <span class="prio prio-alta"><span class="dot"></span>Alta</span>
+            <span class="tag post">Post</span>
+          </div>
+          <h3 class="task-title">Post 03 · <span class="task-sub">Promoção Chopp</span></h3>
+          <div class="task-meta">
+            <span class="mi client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><b>Bells Pub</b></span>
+            <span class="mi"><span class="resp-av" style="background:var(--tile-orange)">A</span>Ana</span>
+            <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Hoje · 22/05</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <div class="task-status-row">
+            <span class="badge-status st-blue" data-status-label>Em produção</span>
+          </div>
+          <div class="qa-row">
+            <button class="qa qa-status" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Mudar status</button>
+            <button class="qa qa-open" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>Abrir</button>
+            <button class="qa qa-note" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Observação</button>
+            <button class="qa qa-done" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Concluir</button>
+          </div>
+        </div>
+        <div class="note-chip" hidden></div>
+        <div class="task-note" hidden>
+          <textarea placeholder="Escreva uma observação para a equipe ou cliente…"></textarea>
+          <div class="note-actions">
+            <button class="btn btn-primary qa-note-save" type="button" style="padding:9px 16px;font-size:13px">Salvar observação</button>
+            <button class="qa qa-note-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Task 4 -->
+      <article class="task" data-status="blue" data-prio="alta">
+        <div class="task-logo"><span class="client-logo" style="background:linear-gradient(135deg,#5b6b86,#3a4660)">IG</span></div>
+        <div class="task-body">
+          <div class="task-tags">
+            <span class="prio prio-alta"><span class="dot"></span>Alta</span>
+            <span class="tag yt">YouTube</span>
+          </div>
+          <h3 class="task-title">Vídeo YouTube · <span class="task-sub">Mensagem 22/05</span></h3>
+          <div class="task-meta">
+            <span class="mi client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><b>Igreja</b></span>
+            <span class="mi"><span class="resp-av" style="background:var(--tile-blue)">N</span>Nicole</span>
+            <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Hoje · 22/05</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <div class="task-status-row">
+            <span class="badge-status st-blue" data-status-label>Em produção</span>
+          </div>
+          <div class="qa-row">
+            <button class="qa qa-status" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Mudar status</button>
+            <button class="qa qa-open" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>Abrir</button>
+            <button class="qa qa-note" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Observação</button>
+            <button class="qa qa-done" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Concluir</button>
+          </div>
+        </div>
+        <div class="note-chip" hidden></div>
+        <div class="task-note" hidden>
+          <textarea placeholder="Escreva uma observação para a equipe ou cliente…"></textarea>
+          <div class="note-actions">
+            <button class="btn btn-primary qa-note-save" type="button" style="padding:9px 16px;font-size:13px">Salvar observação</button>
+            <button class="qa qa-note-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Task 5 -->
+      <article class="task" data-status="gray" data-prio="media">
+        <div class="task-logo"><span class="client-logo" style="background:var(--tile-orange)">UN</span></div>
+        <div class="task-body">
+          <div class="task-tags">
+            <span class="prio prio-media"><span class="dot"></span>Média</span>
+            <span class="tag post">Post</span>
+          </div>
+          <h3 class="task-title">Post 01 · <span class="task-sub">Coleção Inverno</span></h3>
+          <div class="task-meta">
+            <span class="mi client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><b>Unique</b></span>
+            <span class="mi"><span class="resp-av" style="background:var(--tile-orange)">A</span>Ana</span>
+            <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Hoje · 22/05</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <div class="task-status-row">
+            <span class="badge-status st-gray" data-status-label>Pendente</span>
+          </div>
+          <div class="qa-row">
+            <button class="qa qa-status" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Mudar status</button>
+            <button class="qa qa-open" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>Abrir</button>
+            <button class="qa qa-note" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Observação</button>
+            <button class="qa qa-done" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Concluir</button>
+          </div>
+        </div>
+        <div class="note-chip" hidden></div>
+        <div class="task-note" hidden>
+          <textarea placeholder="Escreva uma observação para a equipe ou cliente…"></textarea>
+          <div class="note-actions">
+            <button class="btn btn-primary qa-note-save" type="button" style="padding:9px 16px;font-size:13px">Salvar observação</button>
+            <button class="qa qa-note-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Task 6 -->
+      <article class="task" data-status="violet" data-prio="alta">
+        <div class="task-logo"><span class="client-logo" style="background:linear-gradient(135deg,#9b6cf0,#6d4fd6)">TR</span></div>
+        <div class="task-body">
+          <div class="task-tags">
+            <span class="prio prio-alta"><span class="dot"></span>Alta</span>
+            <span class="tag" style="background:var(--violet-bg);color:var(--violet)">Aprovação</span>
+          </div>
+          <h3 class="task-title">Campanha Maio · <span class="task-sub">aguardando cliente</span></h3>
+          <div class="task-meta">
+            <span class="mi client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><b>Trinitas</b></span>
+            <span class="mi"><span class="resp-av" style="background:var(--tile-blue)">N</span>Nicole</span>
+            <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Hoje · 22/05</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <div class="task-status-row">
+            <span class="badge-status st-violet" data-status-label>Aguardando cliente</span>
+          </div>
+          <div class="qa-row">
+            <button class="qa qa-status" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Mudar status</button>
+            <button class="qa qa-open" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>Abrir</button>
+            <button class="qa qa-note" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Observação</button>
+            <button class="qa qa-done" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Concluir</button>
+          </div>
+        </div>
+        <div class="note-chip" hidden></div>
+        <div class="task-note" hidden>
+          <textarea placeholder="Escreva uma observação para a equipe ou cliente…"></textarea>
+          <div class="note-actions">
+            <button class="btn btn-primary qa-note-save" type="button" style="padding:9px 16px;font-size:13px">Salvar observação</button>
+            <button class="qa qa-note-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <p class="end-note">É só isso por hoje. Resto está no <a href="Producao.html" style="color:var(--primary);font-weight:700;text-decoration:none">quadro de Produção</a> →</p>
+  </main>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg><span id="toast-msg"></span></div>
+
+<script src="assets/sidebar.js"></script>
+<script src="assets/states.js"></script>
+<script src="assets/nova-demanda.js"></script>
+<script>
+// Wire "Nova Demanda" buttons to open the modal
+document.querySelectorAll('.btn-primary').forEach(btn => {
+  if(btn.textContent.trim().includes('Nova Demanda')) {
+    btn.addEventListener('click', () => NovaDemanda.open());
+  }
+});
+const STATUSES = [
+  { key: 'gray',   label: 'Pendente',           color: 'var(--gray)' },
+  { key: 'blue',   label: 'Em produção',        color: 'var(--blue)' },
+  { key: 'amber',  label: 'Em aprovação',       color: 'var(--amber)' },
+  { key: 'violet', label: 'Aguardando cliente', color: 'var(--violet)' },
+  { key: 'green',  label: 'Concluído',          color: 'var(--green)' },
+];
+
+let openPop = null;
+function closePop() { if (openPop) { openPop.remove(); openPop = null; } }
+document.addEventListener('click', closePop);
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+document.querySelectorAll('.task').forEach(task => {
+  const label = task.querySelector('[data-status-label]');
+  const note = task.querySelector('.task-note');
+  const noteChip = task.querySelector('.note-chip');
+  const ta = note.querySelector('textarea');
+
+  // ---- Mudar status (popover) ----
+  task.querySelector('.qa-status').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = openPop && openPop._owner === task;
+    closePop();
+    if (isOpen) return;
+    const pop = document.createElement('div');
+    pop.className = 'status-pop';
+    pop._owner = task;
+    pop.innerHTML = '<div class="po-title">Mudar status</div>' + STATUSES.map(s =>
+      `<button data-key="${s.key}"><span class="sw" style="background:${s.color}"></span>${s.label}` +
+      (task.dataset.status === s.key ? '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>' : '') +
+      `</button>`).join('');
+    pop.addEventListener('click', ev => ev.stopPropagation());
+    pop.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      const s = STATUSES.find(x => x.key === b.dataset.key);
+      task.dataset.status = s.key;
+      label.className = 'badge-status st-' + s.key;
+      label.textContent = s.label;
+      if (s.key === 'green') markDone(task); else unmarkDone(task);
+      closePop();
+      toast('Status atualizado: ' + s.label);
+    }));
+    const r = e.currentTarget.getBoundingClientRect();
+    pop.style.top = (r.bottom + window.scrollY + 8) + 'px';
+    pop.style.left = Math.max(12, r.right + window.scrollX - 210) + 'px';
+    document.body.appendChild(pop);
+    openPop = pop;
+  });
+
+  // ---- Abrir arquivo/link ----
+  task.querySelector('.qa-open').addEventListener('click', () => {
+    toast('Abrindo arquivo do material…');
+  });
+
+  // ---- Observação ----
+  task.querySelector('.qa-note').addEventListener('click', () => {
+    const showing = !note.hidden;
+    note.hidden = showing;
+    task.querySelector('.qa-note').classList.toggle('is-active', !showing);
+    if (!showing) { ta.focus(); }
+  });
+  note.querySelector('.qa-note-cancel').addEventListener('click', () => {
+    note.hidden = true;
+    task.querySelector('.qa-note').classList.remove('is-active');
+  });
+  note.querySelector('.qa-note-save').addEventListener('click', () => {
+    const val = ta.value.trim();
+    note.hidden = true;
+    task.querySelector('.qa-note').classList.remove('is-active');
+    if (val) {
+      noteChip.hidden = false;
+      noteChip.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>' + val.replace(/</g,'&lt;') + '</span>';
+      toast('Observação salva');
+    } else {
+      noteChip.hidden = true;
+    }
+  });
+
+  // ---- Concluir ----
+  task.querySelector('.qa-done').addEventListener('click', () => {
+    if (task.classList.contains('done')) {
+      unmarkDone(task);
+      label.className = 'badge-status st-blue'; label.textContent = 'Em produção'; task.dataset.status = 'blue';
+      toast('Tarefa reaberta');
+    } else {
+      task.dataset.status = 'green';
+      label.className = 'badge-status st-green'; label.textContent = 'Concluído';
+      markDone(task);
+      toast('Tarefa concluída! 🎉');
+    }
+  });
+});
+
+function markDone(task) {
+  task.classList.add('done');
+  const b = task.querySelector('.qa-done');
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z"/><path d="M8 12h8"/></svg>Reabrir';
+}
+function unmarkDone(task) {
+  task.classList.remove('done');
+  const b = task.querySelector('.qa-done');
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Concluir';
+}
+</script>
+</body>
+</html>
